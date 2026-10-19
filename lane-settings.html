@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Lane A · Settings</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="shell.js"></script>
+</head>
+<body class="min-h-screen bg-slate-50 pb-24 text-slate-900 antialiased"
+      data-nav="events"
+      data-crumbs='[{"label":"Acme Auto Auction","href":"#"},{"label":"Events","href":"event-groups.html"},{"label":"Fall Fleet Remarketing","href":"lanes.html"},{"label":"Lane A — Fleet Returns"}]'>
+
+  <main class="mx-auto max-w-7xl px-6 py-8">
+    <div id="lane-header" data-tab="settings"></div>
+
+    <div class="mt-4 flex justify-end">
+      <label class="inline-flex cursor-pointer items-center gap-2 text-xs text-slate-500">
+        <input id="locked-toggle" type="checkbox" class="rounded border-slate-300">
+        Preview locked state (lane already sent to bid engine)
+      </label>
+    </div>
+
+    <div id="locked-banner" class="mt-4 hidden items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+      <i class="fa-solid fa-lock mt-0.5 text-blue-500"></i>
+      <div>
+        <p class="font-medium">Bidding rules are locked</p>
+        <p class="mt-0.5 text-blue-800">This lane was sent to the bid engine on Oct 6 at 11:44 AM CDT. Anti-snipe, increments and starting bids can no longer change. The lane title can still be edited.</p>
+      </div>
+    </div>
+
+    <form id="form" class="mt-4 divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white shadow-sm" novalidate>
+      <!-- General -->
+      <section class="grid gap-6 p-6 md:grid-cols-3">
+        <div>
+          <h2 class="font-semibold">General</h2>
+          <p class="mt-1 text-sm text-slate-500">Shown to bidders in the lane list and on vehicle pages.</p>
+        </div>
+        <div class="space-y-5 md:col-span-2">
+          <div>
+            <label for="title" class="block text-sm font-medium text-slate-700">Lane title</label>
+            <input id="title" value="Lane A — Fleet Returns" class="mt-1 w-full max-w-md rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+          </div>
+          <div>
+            <label for="antisnipe" class="block text-sm font-medium text-slate-700">Anti-snipe window</label>
+            <div class="mt-1 flex w-48 rounded-lg shadow-sm">
+              <input id="antisnipe" type="number" value="120" data-lockable class="w-full rounded-l-lg border border-slate-300 px-3 py-2 text-sm tabular-nums focus:z-10 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-50 disabled:text-slate-500">
+              <span class="inline-flex items-center rounded-r-lg border border-l-0 border-slate-300 bg-slate-50 px-3 text-sm text-slate-500">seconds</span>
+            </div>
+            <p class="mt-1.5 text-xs text-slate-500">A bid in the final <b id="antisnipe-human">2 minutes</b> extends the vehicle's end time by the same amount.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bid increments -->
+      <section class="grid gap-6 p-6 md:grid-cols-3">
+        <div>
+          <h2 class="font-semibold">Bid increments</h2>
+          <p class="mt-1 text-sm text-slate-500">How much each bid must exceed the current high bid. Tiers are based on the current bid amount.</p>
+        </div>
+        <div class="md:col-span-2">
+          <div data-tiers="increment"></div>
+        </div>
+      </section>
+
+      <!-- Starting bid -->
+      <section class="grid gap-6 p-6 md:grid-cols-3">
+        <div>
+          <h2 class="font-semibold">Starting bid</h2>
+          <p class="mt-1 text-sm text-slate-500">The opening bid for each vehicle, based on its floor price.</p>
+        </div>
+        <div class="space-y-4 md:col-span-2">
+          <fieldset>
+            <legend class="text-sm font-medium text-slate-700">Calculate starting bid as</legend>
+            <div class="mt-2 grid max-w-md grid-cols-2 gap-2">
+              <label class="relative flex cursor-pointer rounded-lg border border-slate-300 p-3 text-sm has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 has-[:checked]:ring-1 has-[:checked]:ring-blue-600 has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60">
+                <input type="radio" name="sbtype" value="subtract" checked data-lockable class="sr-only">
+                <span><span class="block font-medium">Below floor</span><span class="text-xs text-slate-500">Floor minus an amount</span></span>
+              </label>
+              <label class="relative flex cursor-pointer rounded-lg border border-slate-300 p-3 text-sm has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 has-[:checked]:ring-1 has-[:checked]:ring-blue-600 has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60">
+                <input type="radio" name="sbtype" value="fixed" data-lockable class="sr-only">
+                <span><span class="block font-medium">Fixed amount</span><span class="text-xs text-slate-500">Same for every vehicle in tier</span></span>
+              </label>
+            </div>
+          </fieldset>
+          <div data-tiers="starting"></div>
+        </div>
+      </section>
+
+      <!-- Offer threshold -->
+      <section class="grid gap-6 p-6 md:grid-cols-3">
+        <div>
+          <h2 class="font-semibold">If / Offer threshold</h2>
+          <p class="mt-1 text-sm text-slate-500">Bids below floor but at or above this percentage go to the seller as an offer instead of a no-sale.</p>
+        </div>
+        <div class="md:col-span-2">
+          <div data-tiers="offer"></div>
+        </div>
+      </section>
+    </form>
+  </main>
+
+  <div class="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur">
+    <div class="mx-auto flex max-w-7xl items-center gap-4 px-6 py-3">
+      <p id="error-summary" class="hidden text-sm text-red-700"><i class="fa-solid fa-circle-exclamation mr-1"></i><span></span></p>
+      <div class="ml-auto flex gap-2">
+        <a href="lanes.html" class="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</a>
+        <button id="save" class="rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">Save lane</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const increments = [25, 50, 100, 250, 500, 1000];
+    const percents = [70, 75, 80, 85, 90, 95];
+    const money = (n) => "$" + Number(n).toLocaleString();
+
+    const tierSets = {
+      increment: {
+        valueLabel: "Increment",
+        kind: "select-money",
+        options: increments,
+        tiers: [
+          { start: 0, end: 4999, value: 100 },
+          { start: 5000, end: 14999, value: 250 },
+          { start: 14000, end: null, value: 500 },
+        ],
+        sentence: (t) => `bids go up by <b>${money(t.value)}</b>`,
+      },
+      starting: {
+        valueLabel: "Amount",
+        kind: "money",
+        tiers: [
+          { start: 0, end: 9999, value: 1000 },
+          { start: 10000, end: null, value: 2500 },
+        ],
+        sentence: (t) => document.querySelector('[name="sbtype"]:checked').value === "fixed"
+          ? `bidding opens at <b>${money(t.value)}</b>`
+          : `bidding opens <b>${money(t.value)}</b> below floor`,
+      },
+      offer: {
+        valueLabel: "Threshold",
+        kind: "select-percent",
+        options: percents,
+        tiers: [],
+        empty: "No threshold set — only bids at or above floor will sell.",
+        sentence: (t) => `bids ≥ <b>${t.value}%</b> of floor become offers`,
+      },
+    };
+
+    const inputCls = "w-full rounded-lg border px-3 py-2 text-sm tabular-nums shadow-sm focus:outline-none focus:ring-2 disabled:bg-slate-50 disabled:text-slate-500";
+    const okCls = "border-slate-300 focus:border-blue-500 focus:ring-blue-500/20";
+    const errCls = "border-red-400 bg-red-50 focus:border-red-500 focus:ring-red-500/20";
+
+    function locked() { return document.getElementById("locked-toggle").checked; }
+
+    function errorsFor(tiers) {
+      return tiers.map((t, i) => {
+        if (t.end != null && t.end < t.start) return "End must be greater than start";
+        const prev = tiers[i - 1];
+        if (prev && prev.end != null && t.start <= prev.end) return `Overlaps the tier above (ends at ${money(prev.end)})`;
+        if (prev && prev.end == null) return "Tier above has no end";
+        return null;
+      });
+    }
+
+    function moneyInput(attrs, value, placeholder, err) {
+      return `
+        <div class="relative">
+          <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">$</span>
+          <input type="number" ${attrs} value="${value ?? ""}" placeholder="${placeholder}" data-lockable class="${inputCls} pl-6 ${err ? errCls : okCls}">
+        </div>`;
+    }
+
+    function valueInput(set, i, t) {
+      if (set.kind === "money") return moneyInput(`data-field="value" data-i="${i}"`, t.value, "0");
+      const fmt = set.kind === "select-money" ? money : (v) => `${v}%`;
+      return `<select data-field="value" data-i="${i}" data-lockable class="${inputCls} ${okCls}">
+        ${set.options.map((o) => `<option value="${o}" ${o === t.value ? "selected" : ""}>${fmt(o)}</option>`).join("")}
+      </select>`;
+    }
+
+    function renderTiers(key) {
+      const set = tierSets[key];
+      const el = document.querySelector(`[data-tiers="${key}"]`);
+      const errs = errorsFor(set.tiers);
+      const lock = locked();
+
+      const rows = set.tiers.map((t, i) => `
+        <div class="grid grid-cols-[1fr_1fr_1fr_auto] items-start gap-3">
+          ${moneyInput(`data-field="start" data-i="${i}"`, t.start, "0", errs[i])}
+          ${moneyInput(`data-field="end" data-i="${i}"`, t.end, "and up", false)}
+          ${valueInput(set, i, t)}
+          ${lock ? '<span class="w-9"></span>' : `<button type="button" data-remove="${i}" class="grid h-9 w-9 place-items-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600" aria-label="Remove tier"><i class="fa-solid fa-xmark"></i></button>`}
+          ${errs[i] ? `<p class="col-span-4 -mt-1 text-xs text-red-600"><i class="fa-solid fa-circle-exclamation mr-1"></i>${errs[i]}</p>` : ""}
+        </div>`).join("");
+
+      const summary = set.tiers.length && !errs.some(Boolean)
+        ? `<ul class="mt-4 space-y-1 rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
+            ${set.tiers.map((t) => `<li><i class="fa-solid fa-arrow-right mr-1.5 text-slate-300"></i>${money(t.start)}${t.end != null ? `–${money(t.end)}` : " and up"}: ${set.sentence(t)}</li>`).join("")}
+          </ul>` : "";
+
+      el.innerHTML = set.tiers.length ? `
+        <div class="grid grid-cols-[1fr_1fr_1fr_auto] gap-3 pb-1.5 text-xs font-medium text-slate-500">
+          <span>From</span><span>To</span><span>${set.valueLabel}</span><span class="w-9"></span>
+        </div>
+        <div class="space-y-3">${rows}</div>
+        ${lock ? "" : `<button type="button" data-add="${key}" class="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-blue-700 hover:text-blue-800"><i class="fa-solid fa-plus text-xs"></i>Add tier</button>`}
+        ${summary}
+      ` : `
+        <div class="rounded-lg border border-dashed border-amber-300 bg-amber-50/50 p-4 text-center">
+          <p class="text-sm text-amber-900">${set.empty}</p>
+          ${lock ? "" : `<button type="button" data-add="${key}" class="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-blue-700 hover:text-blue-800"><i class="fa-solid fa-plus text-xs"></i>Add threshold</button>`}
+        </div>`;
+
+      el.querySelectorAll("[data-lockable]").forEach((i) => (i.disabled = lock));
+      return errs.filter(Boolean).length;
+    }
+
+    function renderAll() {
+      const errorCount = Object.keys(tierSets).reduce((n, k) => n + renderTiers(k), 0);
+      document.querySelectorAll("form > section:first-child [data-lockable], [name=sbtype]").forEach((i) => (i.disabled = locked()));
+      document.getElementById("locked-banner").classList.toggle("hidden", !locked());
+      document.getElementById("locked-banner").classList.toggle("flex", locked());
+
+      const summary = document.getElementById("error-summary");
+      summary.classList.toggle("hidden", !errorCount);
+      summary.querySelector("span").textContent = `Fix ${errorCount} problem${errorCount === 1 ? "" : "s"} before saving`;
+      document.getElementById("save").disabled = errorCount > 0;
+    }
+
+    document.addEventListener("click", (ev) => {
+      const add = ev.target.closest("[data-add]");
+      if (add) {
+        const tiers = tierSets[add.dataset.add].tiers;
+        const last = tiers[tiers.length - 1];
+        const set = tierSets[add.dataset.add];
+        if (last && last.end == null) last.end = last.start + 9999;
+        tiers.push({ start: last ? last.end + 1 : 0, end: null, value: set.options ? set.options[0] : 0 });
+        renderAll();
+      }
+      const rm = ev.target.closest("[data-remove]");
+      if (rm) {
+        const key = rm.closest("[data-tiers]").dataset.tiers;
+        tierSets[key].tiers.splice(+rm.dataset.remove, 1);
+        renderAll();
+      }
+    });
+
+    document.addEventListener("change", (ev) => {
+      const field = ev.target.dataset.field;
+      if (field) {
+        const key = ev.target.closest("[data-tiers]").dataset.tiers;
+        const t = tierSets[key].tiers[+ev.target.dataset.i];
+        t[field] = ev.target.value === "" ? null : +ev.target.value;
+        renderAll();
+      }
+      if (ev.target.name === "sbtype") renderAll();
+    });
+
+    document.getElementById("antisnipe").addEventListener("input", (ev) => {
+      const s = +ev.target.value || 0;
+      document.getElementById("antisnipe-human").textContent =
+        s % 60 === 0 && s ? `${s / 60} minute${s === 60 ? "" : "s"}` : `${s} seconds`;
+    });
+    document.getElementById("locked-toggle").addEventListener("change", renderAll);
+    document.getElementById("save").addEventListener("click", (ev) => ev.preventDefault());
+    renderAll();
+  </script>
+</body>
+</html>

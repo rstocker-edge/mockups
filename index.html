@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Taurus UI mockups</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="shell.js"></script>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 antialiased" data-nav="">
+  <main class="mx-auto max-w-5xl px-6 py-10">
+    <h1 class="text-2xl font-semibold tracking-tight">Taurus UI/UX mockups</h1>
+    <p class="mt-1 max-w-2xl text-sm text-slate-600">
+      Static Tailwind mockups with fake data. Each page maps to an existing Rails view; notes list the main UX
+      problems addressed. Some interactions are wired with a little JS so they can be clicked through.
+    </p>
+
+    <h2 class="mt-8 text-xs font-semibold uppercase tracking-wide text-slate-500">Cross-cutting changes</h2>
+    <ul class="mt-2 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
+      <li class="rounded-lg border border-slate-200 bg-white p-3"><b>One header.</b> Nav + project switcher in one dark bar; breadcrumbs show the full path (Project › Event › Lane) instead of only the project.</li>
+      <li class="rounded-lg border border-slate-200 bg-white p-3"><b>Labeled actions.</b> Icon-only links (road, calendar-check, gear) become labeled buttons or an overflow menu.</li>
+      <li class="rounded-lg border border-slate-200 bg-white p-3"><b>Consistent status badges.</b> One badge style (dot + label) for event, lane, sync and sale states.</li>
+      <li class="rounded-lg border border-slate-200 bg-white p-3"><b>Surface problems.</b> Missing floor prices, unsynced lanes and failed selldowns are counted up front and filterable.</li>
+      <li class="rounded-lg border border-slate-200 bg-white p-3"><b>Safer saves.</b> Sticky save bar with unsaved-change count; warns when saving will sync to the bid engine.</li>
+      <li class="rounded-lg border border-slate-200 bg-white p-3"><b>Readable dates.</b> Compact absolute dates plus relative time ("starts in 2 days") instead of long strftime strings.</li>
+    </ul>
+
+    <h2 class="mt-8 text-xs font-semibold uppercase tracking-wide text-slate-500">Pages</h2>
+    <div class="mt-2 grid gap-4 sm:grid-cols-2">
+      <a href="event-groups.html" class="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold">Events list</h3>
+          <i class="fa-solid fa-arrow-right text-slate-300 group-hover:text-blue-600"></i>
+        </div>
+        <p class="mt-0.5 text-xs text-slate-500">event_groups/index</p>
+        <ul class="mt-3 list-disc space-y-1 pl-4 text-sm text-slate-600">
+          <li>Status tabs with counts and search</li>
+          <li>Lane/vehicle counts and "needs attention" flags per row</li>
+          <li>Primary "Manage lanes" button + overflow menu; type-to-confirm delete</li>
+        </ul>
+      </a>
+      <a href="lanes.html" class="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold">Event detail / lanes</h3>
+          <i class="fa-solid fa-arrow-right text-slate-300 group-hover:text-blue-600"></i>
+        </div>
+        <p class="mt-0.5 text-xs text-slate-500">events/index</p>
+        <ul class="mt-3 list-disc space-y-1 pl-4 text-sm text-slate-600">
+          <li>Event summary header (schedule, type, closed-sale group)</li>
+          <li>Lane cards with sync state, progress and direct links</li>
+          <li>"Finalized: No" in red replaced with neutral lifecycle state</li>
+        </ul>
+      </a>
+      <a href="lane-inventory.html" class="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold">Lane inventory</h3>
+          <i class="fa-solid fa-arrow-right text-slate-300 group-hover:text-blue-600"></i>
+        </div>
+        <p class="mt-0.5 text-xs text-slate-500">events/edit_listings</p>
+        <ul class="mt-3 list-disc space-y-1 pl-4 text-sm text-slate-600">
+          <li>Summary tiles; one-click filter to missing floor prices</li>
+          <li>Fewer, wider columns; floor vs. AMS diff shown inline</li>
+          <li>Bulk-action bar on selection; sticky save bar when dirty</li>
+        </ul>
+      </a>
+      <a href="lane-settings.html" class="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold">Lane settings</h3>
+          <i class="fa-solid fa-arrow-right text-slate-300 group-hover:text-blue-600"></i>
+        </div>
+        <p class="mt-0.5 text-xs text-slate-500">events/edit + _settings</p>
+        <ul class="mt-3 list-disc space-y-1 pl-4 text-sm text-slate-600">
+          <li>Sectioned form with explanations beside each control</li>
+          <li>Tier editor with $ prefixes, "Add tier", inline overlap errors</li>
+          <li>Explicit locked state once sent to bid engine</li>
+        </ul>
+      </a>
+      <a href="bid-monitor.html" class="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold">Bid monitor</h3>
+          <i class="fa-solid fa-arrow-right text-slate-300 group-hover:text-blue-600"></i>
+        </div>
+        <p class="mt-0.5 text-xs text-slate-500">events/bid_monitor</p>
+        <ul class="mt-3 list-disc space-y-1 pl-4 text-sm text-slate-600">
+          <li>KPI tiles (sold, gross, if/offer, no sale, failed selldowns)</li>
+          <li>13 columns condensed to 8; winner shown as agent + dealership</li>
+          <li>Per-row expand chevron replaces the full-width "VIEW LOGS" row under every vehicle; bid log as a timeline</li>
+        </ul>
+      </a>
+      <a href="dot-auction-search.html" class="group rounded-xl border border-fuchsia-200 bg-white p-5 shadow-sm transition hover:border-fuchsia-400 hover:shadow">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold">.Auction search &amp; bid panel <span class="ml-1 rounded bg-fuchsia-100 px-1.5 py-0.5 text-[11px] font-medium text-fuchsia-700">Grus · bidder-facing</span></h3>
+          <i class="fa-solid fa-arrow-right text-slate-300 group-hover:text-blue-600"></i>
+        </div>
+        <p class="mt-0.5 text-xs text-slate-500">grus: DotAuctionSearch / VehicleCard / BidPanel</p>
+        <ul class="mt-3 list-disc space-y-1 pl-4 text-sm text-slate-600">
+          <li>Bidder picker moved above the actions; Bid/Proxy hidden until the viewer can bid</li>
+          <li>Clear status callouts (winning, outbid, on offer) with next step</li>
+          <li>Proxy modal with quick picks; working mock controls for viewer + competing bids</li>
+        </ul>
+      </a>
+    </div>
+  </main>
+</body>
+</html>

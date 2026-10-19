@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Lane A · Bid monitor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="shell.js"></script>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 antialiased"
+      data-nav="events"
+      data-crumbs='[{"label":"Acme Auto Auction","href":"#"},{"label":"Events","href":"event-groups.html"},{"label":"Fall Fleet Remarketing","href":"lanes.html"},{"label":"Lane A — Fleet Returns"}]'>
+
+  <main class="mx-auto max-w-7xl px-6 py-8">
+    <div id="lane-header" data-tab="bids"></div>
+
+    <!-- KPIs -->
+    <div class="mt-6 grid grid-cols-2 gap-4 md:grid-cols-5">
+      <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Sold</p>
+        <p class="mt-1 text-2xl font-semibold tabular-nums">18 <span class="text-sm font-normal text-slate-400">/ 48</span></p>
+        <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100"><div class="h-full bg-green-500" style="width:37.5%"></div></div>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Gross sold</p>
+        <p class="mt-1 text-2xl font-semibold tabular-nums">$412,300</p>
+        <p class="mt-1 text-xs text-slate-500">Avg $22,906 · 103% of floor</p>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">If / Offer</p>
+        <p class="mt-1 text-2xl font-semibold tabular-nums text-amber-700">6</p>
+        <p class="mt-1 text-xs text-slate-500">Awaiting seller response</p>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Avg bidders</p>
+        <p class="mt-1 text-2xl font-semibold tabular-nums">3.2</p>
+        <p class="mt-1 text-xs text-slate-500">4 vehicles with no bids</p>
+      </div>
+      <button data-status="failed" class="rounded-xl border border-red-200 bg-red-50 p-4 text-left shadow-sm hover:border-red-300">
+        <p class="text-xs font-medium uppercase tracking-wide text-red-700">Selldown failed</p>
+        <p class="mt-1 text-2xl font-semibold tabular-nums text-red-800">1</p>
+        <p class="mt-1 text-xs font-medium text-red-700 underline underline-offset-2">Review</p>
+      </button>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
+      <div class="inline-flex rounded-lg border border-slate-200 bg-white p-1 text-sm shadow-sm" id="tabs">
+        <button data-status="all" class="tab rounded-md px-3 py-1.5 font-medium">All</button>
+        <button data-status="active" class="tab rounded-md px-3 py-1.5 font-medium">Bidding</button>
+        <button data-status="sold" class="tab rounded-md px-3 py-1.5 font-medium">Sold</button>
+        <button data-status="offer" class="tab rounded-md px-3 py-1.5 font-medium">If / Offer</button>
+        <button data-status="nosale" class="tab rounded-md px-3 py-1.5 font-medium">No sale</button>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-1.5 text-xs text-slate-500"><span class="h-1.5 w-1.5 animate-pulse rounded-full bg-green-500"></span>Auto-refreshing</span>
+        <details class="relative">
+          <summary class="inline-flex cursor-pointer list-none items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
+            <i class="fa-solid fa-download text-xs text-slate-400"></i> Export <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
+          </summary>
+          <div class="absolute right-0 z-20 mt-1 w-56 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 text-sm shadow-lg">
+            <a href="#" class="block px-3 py-2 hover:bg-slate-50"><span class="font-medium">Bid logs</span><span class="block text-xs text-slate-500">Every bid, CSV</span></a>
+            <a href="#" class="block px-3 py-2 hover:bg-slate-50"><span class="font-medium">Sale listings</span><span class="block text-xs text-slate-500">One row per vehicle, CSV</span></a>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="mt-3 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <table class="w-full min-w-[960px] text-left text-sm">
+        <thead class="border-b border-slate-200 bg-slate-50 text-xs font-medium uppercase tracking-wide text-slate-500">
+          <tr>
+            <th class="w-16 py-3 pl-4">Run</th>
+            <th class="px-3 py-3">Vehicle</th>
+            <th class="px-3 py-3 text-right">Floor</th>
+            <th class="px-3 py-3 text-right">High bid</th>
+            <th class="px-3 py-3">Status</th>
+            <th class="px-3 py-3">Selldown</th>
+            <th class="px-3 py-3">Winner</th>
+            <th class="w-12 py-3 pr-4"><span class="sr-only">Bid log</span></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    const listings = [
+      { id: 88121, run: 101, desc: "2021 Ford F-150 XLT SuperCrew", stock: "FL-20931", floor: 31500, high: 33250, bidders: 5, status: "sold", selldown: "complete", agent: "Maria Delgado", dealer: "Lone Star Motors",
+        log: [["11:02:14", "Lone Star Motors", 33250, "Max bid", true], ["11:01:58", "Northside Auto", 33000, "Bid"], ["11:01:40", "Lone Star Motors", 32750, "Proxy"], ["10:58:03", "Riverbend Trucks", 32000, "Bid"], ["10:41:22", "Northside Auto", 31000, "Bid"], ["09:00:00", "—", 30500, "Opening bid"]] },
+      { id: 88122, run: 102, desc: "2020 Chevrolet Silverado 1500 LT", stock: "FL-20944", floor: null, high: 24100, bidders: 3, status: "sold", selldown: "pending", agent: "Dan Whitaker", dealer: "Capital City Cars",
+        log: [["11:04:51", "Capital City Cars", 24100, "Bid", true], ["11:03:10", "Northside Auto", 23850, "Bid"], ["09:12:44", "Lone Star Motors", 22000, "Bid"]] },
+      { id: 88123, run: 103, desc: "2022 Toyota Camry SE", stock: "LR-11872", floor: 22000, high: 20900, bidders: 4, status: "offer", selldown: null, agent: "Priya Shah", dealer: "Gulf Coast Imports",
+        log: [["11:06:30", "Gulf Coast Imports", 20900, "Max bid", true], ["11:05:02", "Riverbend Trucks", 20650, "Bid"]] },
+      { id: 88124, run: 104, desc: "2019 Nissan Rogue SV AWD", stock: "LR-11880", floor: 15800, high: null, bidders: 0, status: "nosale", selldown: null, log: [] },
+      { id: 88125, run: 105, desc: "2021 Ram ProMaster 2500 High Roof", stock: "FL-20952", floor: 34000, high: 35500, bidders: 2, status: "sold", selldown: "failed", agent: "Tom Becker", dealer: "Fleetway Commercial",
+        error: "Public API: buyer account FLEETWAY-0042 is on credit hold.",
+        log: [["11:08:12", "Fleetway Commercial", 35500, "Bid", true], ["10:55:40", "Riverbend Trucks", 34250, "Bid"]] },
+      { id: 88126, run: 106, desc: "2018 Honda Accord EX-L", stock: "DL-00412", floor: null, high: 16400, bidders: 6, status: "active", selldown: null, ends: "Ends in 4m 12s", agent: "Lee Park", dealer: "Northside Auto",
+        log: [["11:44:09", "Northside Auto", 16400, "Bid", true], ["11:43:51", "Capital City Cars", 16150, "Bid"], ["11:43:30", "Northside Auto", 15900, "Proxy"]] },
+      { id: 88127, run: 107, desc: "2023 Hyundai Tucson SEL", stock: "LR-11891", floor: 24200, high: 23600, bidders: 3, status: "active", selldown: null, ends: "Ends in 9m 40s", agent: "Ana Ruiz", dealer: "Gulf Coast Imports",
+        log: [["11:40:02", "Gulf Coast Imports", 23600, "Bid", true]] },
+    ];
+
+    const statusBadge = {
+      sold: ["Sold", "bg-green-50 text-green-700 ring-green-600/20"],
+      offer: ["If / Offer", "bg-amber-50 text-amber-800 ring-amber-600/20"],
+      nosale: ["No sale", "bg-slate-100 text-slate-600 ring-slate-500/20"],
+      active: ["Bidding", "bg-blue-50 text-blue-700 ring-blue-600/20"],
+    };
+    const selldownBadge = {
+      complete: '<span class="inline-flex items-center gap-1 text-xs text-green-700"><i class="fa-solid fa-circle-check"></i>Complete</span>',
+      pending: '<span class="inline-flex items-center gap-1 text-xs text-slate-600"><i class="fa-solid fa-spinner fa-spin"></i>Processing</span>',
+      failed: '<span class="inline-flex items-center gap-1 text-xs font-medium text-red-700"><i class="fa-solid fa-circle-xmark"></i>Failed</span>',
+    };
+
+    const money = (n) => (n == null ? "—" : "$" + n.toLocaleString());
+    const open = new Set([88121]);
+    let status = "all";
+
+    function logPanel(l) {
+      if (!l.log.length) return `<p class="py-6 text-center text-sm text-slate-500">No bids were placed on this vehicle.</p>`;
+      return `
+        <div class="flex items-center justify-between">
+          <div class="inline-flex rounded-md border border-slate-200 bg-white p-0.5 text-xs">
+            <button class="rounded bg-slate-900 px-2 py-1 font-medium text-white">Formatted</button>
+            <button class="rounded px-2 py-1 font-medium text-slate-600 hover:bg-slate-100" title="System masters only">Raw</button>
+          </div>
+          <span class="text-xs text-slate-500">${l.log.length} bids · ${l.bidders} bidders · listing #${l.id}</span>
+        </div>
+        ${l.error ? `<div class="mt-3 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+            <i class="fa-solid fa-circle-xmark text-red-500"></i><span class="flex-1">${l.error}</span>
+            <button class="rounded-md border border-red-300 bg-white px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-50">Retry selldown</button>
+          </div>` : ""}
+        <ol class="mt-3 space-y-0">
+          ${l.log.map(([time, who, amt, type, top]) => `
+            <li class="relative flex items-center gap-3 border-l-2 ${top ? "border-green-500" : "border-slate-200"} py-1.5 pl-4">
+              <span class="absolute -left-[5px] h-2 w-2 rounded-full ${top ? "bg-green-500" : "bg-slate-300"}"></span>
+              <span class="w-16 font-mono text-xs text-slate-500">${time}</span>
+              <span class="w-24 text-right font-medium tabular-nums ${top ? "text-green-700" : "text-slate-900"}">${money(amt)}</span>
+              <span class="flex-1 text-slate-700">${who}</span>
+              <span class="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">${type}</span>
+            </li>`).join("")}
+        </ol>`;
+    }
+
+    function render() {
+      const rows = listings.filter((l) => status === "all" || l.status === status || (status === "failed" && l.selldown === "failed"));
+      document.getElementById("rows").innerHTML = rows.map((l) => {
+        const [label, cls] = statusBadge[l.status];
+        const pct = l.floor && l.high ? Math.round((l.high / l.floor) * 100) : null;
+        const isOpen = open.has(l.id);
+        return `
+          <tr class="border-t border-slate-100 ${l.selldown === "failed" ? "bg-red-50/50" : "hover:bg-slate-50"} cursor-pointer" data-toggle="${l.id}">
+            <td class="py-3 pl-4 tabular-nums text-slate-500">${l.run}</td>
+            <td class="px-3 py-3">
+              <div class="font-medium text-slate-900">${l.desc}</div>
+              <div class="text-xs text-slate-500">Stock ${l.stock}</div>
+            </td>
+            <td class="px-3 py-3 text-right tabular-nums ${l.floor ? "text-slate-700" : "text-red-600"}">${l.floor ? money(l.floor) : "No floor"}</td>
+            <td class="px-3 py-3 text-right">
+              <div class="font-medium tabular-nums">${money(l.high)}</div>
+              <div class="text-xs text-slate-500">${l.bidders} bidder${l.bidders === 1 ? "" : "s"}${pct ? ` · <span class="${pct >= 100 ? "text-green-700" : "text-amber-700"}">${pct}%</span>` : ""}</div>
+            </td>
+            <td class="px-3 py-3">
+              <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${cls}">${label}</span>
+              ${l.ends ? `<div class="mt-1 text-xs text-blue-700">${l.ends}</div>` : ""}
+            </td>
+            <td class="px-3 py-3">${l.selldown ? selldownBadge[l.selldown] : '<span class="text-xs text-slate-400">—</span>'}</td>
+            <td class="px-3 py-3">
+              ${l.agent && l.status !== "nosale" ? `<div class="text-slate-900">${l.dealer}</div><div class="text-xs text-slate-500">${l.agent}</div>` : '<span class="text-xs text-slate-400">—</span>'}
+            </td>
+            <td class="py-3 pr-4 text-right">
+              <span class="grid h-8 w-8 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Toggle bid log">
+                <i class="fa-solid fa-chevron-down text-xs transition-transform ${isOpen ? "rotate-180" : ""}"></i>
+              </span>
+            </td>
+          </tr>
+          ${isOpen ? `<tr class="bg-slate-50"><td colspan="8" class="px-6 pb-5 pt-3">${logPanel(l)}</td></tr>` : ""}`;
+      }).join("");
+
+      document.querySelectorAll("#tabs .tab").forEach((t) => {
+        const on = t.dataset.status === status;
+        t.classList.toggle("bg-slate-900", on);
+        t.classList.toggle("text-white", on);
+        t.classList.toggle("text-slate-600", !on);
+      });
+    }
+
+    document.addEventListener("click", (ev) => {
+      const s = ev.target.closest("[data-status]");
+      if (s) { status = s.dataset.status; if (status === "failed") listings.filter((l) => l.selldown === "failed").forEach((l) => open.add(l.id)); render(); return; }
+      const tr = ev.target.closest("[data-toggle]");
+      if (tr) { const id = +tr.dataset.toggle; open.has(id) ? open.delete(id) : open.add(id); render(); }
+      document.querySelectorAll("details[open]").forEach((d) => { if (!d.contains(ev.target)) d.open = false; });
+    });
+    render();
+  </script>
+</body>
+</html>

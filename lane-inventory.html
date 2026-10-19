@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Lane A · Inventory</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="shell.js"></script>
+</head>
+<body class="min-h-screen bg-slate-50 pb-28 text-slate-900 antialiased"
+      data-nav="events"
+      data-crumbs='[{"label":"Acme Auto Auction","href":"#"},{"label":"Events","href":"event-groups.html"},{"label":"Fall Fleet Remarketing","href":"lanes.html"},{"label":"Lane A — Fleet Returns"}]'>
+
+  <main class="mx-auto max-w-7xl px-6 py-8">
+    <div id="lane-header" data-tab="inventory"></div>
+
+    <!-- Summary tiles -->
+    <div class="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Vehicles</p>
+        <p class="mt-1 text-2xl font-semibold tabular-nums">48</p>
+      </div>
+      <button data-chip="missing" class="rounded-xl border border-red-200 bg-red-50 p-4 text-left shadow-sm transition hover:border-red-300">
+        <p class="text-xs font-medium uppercase tracking-wide text-red-700">Missing floor price</p>
+        <p class="mt-1 flex items-baseline justify-between text-2xl font-semibold tabular-nums text-red-800">
+          <span id="missing-count">3</span><span class="text-xs font-medium text-red-700 underline underline-offset-2">Show</span>
+        </p>
+      </button>
+      <button data-chip="changed" class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-left shadow-sm transition hover:border-amber-300">
+        <p class="text-xs font-medium uppercase tracking-wide text-amber-800">Floor differs from AMS</p>
+        <p class="mt-1 flex items-baseline justify-between text-2xl font-semibold tabular-nums text-amber-900">
+          <span id="changed-count">4</span><span class="text-xs font-medium text-amber-800 underline underline-offset-2">Show</span>
+        </p>
+      </button>
+      <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Avg floor % of PMR</p>
+        <p class="mt-1 text-2xl font-semibold tabular-nums">94%</p>
+      </div>
+    </div>
+
+    <!-- Missing floor explanation -->
+    <div class="mt-4 flex items-start gap-3 rounded-lg border border-red-200 bg-white p-4 text-sm">
+      <i class="fa-solid fa-circle-exclamation mt-0.5 text-red-500"></i>
+      <p class="text-slate-700"><b class="font-medium text-slate-900">Vehicles without a floor price sell as an absolute sale</b> for any offered amount. Set a floor or remove them from the lane before the event starts.</p>
+    </div>
+
+    <!-- Toolbar / bulk bar -->
+    <div class="mt-6 flex min-h-[44px] flex-wrap items-center justify-between gap-3">
+      <div id="toolbar" class="flex flex-1 flex-wrap items-center gap-3">
+        <div class="inline-flex rounded-lg border border-slate-200 bg-white p-1 text-sm shadow-sm" id="chips">
+          <button data-chip="all" class="chip rounded-md px-3 py-1.5 font-medium">All</button>
+          <button data-chip="missing" class="chip rounded-md px-3 py-1.5 font-medium">Missing floor</button>
+          <button data-chip="changed" class="chip rounded-md px-3 py-1.5 font-medium">Changed from AMS</button>
+        </div>
+        <div class="relative w-full max-w-xs">
+          <i class="fa-solid fa-magnifying-glass pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400"></i>
+          <input id="search" type="search" placeholder="Vehicle, VIN, stock #…" class="w-full rounded-lg border border-slate-300 bg-white py-2 pl-8 pr-3 text-sm shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+        </div>
+      </div>
+      <div id="bulkbar" class="hidden flex-1 items-center gap-3 rounded-lg bg-slate-900 px-4 py-2 text-sm text-white shadow">
+        <span><b id="selected-count">0</b> selected</span>
+        <span class="h-4 w-px bg-white/20"></span>
+        <button id="bulk-ams" class="rounded-md px-2 py-1 font-medium hover:bg-white/10"><i class="fa-solid fa-arrows-rotate mr-1.5 text-xs"></i>Reset floor to AMS</button>
+        <button class="rounded-md px-2 py-1 font-medium text-red-300 hover:bg-white/10"><i class="fa-solid fa-trash mr-1.5 text-xs"></i>Remove from lane</button>
+        <button id="bulk-clear" class="ml-auto rounded-md px-2 py-1 text-slate-300 hover:bg-white/10">Clear</button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="mt-3 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <table class="w-full min-w-[960px] text-left text-sm">
+        <thead class="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-xs font-medium uppercase tracking-wide text-slate-500">
+          <tr>
+            <th class="w-10 py-3 pl-4"><input id="select-all" type="checkbox" class="rounded border-slate-300" aria-label="Select all"></th>
+            <th class="px-3 py-3"><button class="inline-flex items-center gap-1 uppercase hover:text-slate-700">Vehicle <i class="fa-solid fa-sort text-[10px] text-slate-300"></i></button></th>
+            <th class="px-3 py-3"><button class="inline-flex items-center gap-1 uppercase hover:text-slate-700">Seller <i class="fa-solid fa-sort text-[10px] text-slate-300"></i></button></th>
+            <th class="w-48 px-3 py-3"><button class="inline-flex items-center gap-1 uppercase hover:text-slate-700">Floor price <i class="fa-solid fa-sort text-[10px] text-slate-300"></i></button></th>
+            <th class="px-3 py-3 text-right"><button class="inline-flex items-center gap-1 uppercase hover:text-slate-700">PMR <i class="fa-solid fa-sort text-[10px] text-slate-300"></i></button></th>
+            <th class="w-36 px-3 py-3"><button class="inline-flex items-center gap-1 uppercase hover:text-slate-700">% of PMR <i class="fa-solid fa-sort text-[10px] text-slate-300"></i></button></th>
+            <th class="px-3 py-3">Lights</th>
+            <th class="px-3 py-3 pr-4 text-right"><button class="inline-flex items-center gap-1 uppercase hover:text-slate-700">AMS run <i class="fa-solid fa-sort text-[10px] text-slate-300"></i></button></th>
+          </tr>
+        </thead>
+        <tbody id="rows" class="divide-y divide-slate-100"></tbody>
+      </table>
+      <div class="flex items-center justify-between border-t border-slate-200 px-4 py-3 text-sm text-slate-500">
+        <span>Showing <b class="font-medium text-slate-700" id="showing">1–12</b> of <b class="font-medium text-slate-700">48</b></span>
+        <div class="flex items-center gap-1">
+          <button class="rounded-md border border-slate-200 px-3 py-1.5 text-slate-400" disabled>Previous</button>
+          <button class="rounded-md bg-slate-900 px-3 py-1.5 font-medium text-white">1</button>
+          <button class="rounded-md px-3 py-1.5 hover:bg-slate-100">2</button>
+          <button class="rounded-md px-3 py-1.5 hover:bg-slate-100">3</button>
+          <button class="rounded-md px-3 py-1.5 hover:bg-slate-100">4</button>
+          <button class="rounded-md border border-slate-300 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50">Next</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Sticky save bar -->
+  <div id="savebar" class="fixed inset-x-0 bottom-0 z-30 translate-y-full border-t border-slate-200 bg-white/95 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] backdrop-blur transition-transform">
+    <div class="mx-auto flex max-w-7xl items-center gap-4 px-6 py-3">
+      <span class="grid h-8 w-8 place-items-center rounded-full bg-amber-100 text-amber-700"><i class="fa-solid fa-pen text-xs"></i></span>
+      <div class="text-sm">
+        <p class="font-medium"><span id="dirty-count">0</span> unsaved change(s)</p>
+        <p class="text-xs text-slate-500"><i class="fa-solid fa-circle-info mr-1"></i>This lane is live — saving will sync changes to the bid engine and may take a minute.</p>
+      </div>
+      <div class="ml-auto flex gap-2">
+        <button id="discard" class="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Discard</button>
+        <button id="save" class="rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700">Save &amp; sync</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- No-floor confirmation -->
+  <div id="confirm-modal" class="fixed inset-0 z-40 hidden items-center justify-center bg-slate-900/50 p-4">
+    <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+      <div class="flex gap-4">
+        <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-600"><i class="fa-solid fa-triangle-exclamation"></i></span>
+        <div>
+          <h2 class="font-semibold">Save with <span id="confirm-missing"></span> vehicle(s) missing a floor?</h2>
+          <p class="mt-1 text-sm text-slate-600">These will sell as an absolute sale to the highest bidder, regardless of price.</p>
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end gap-2">
+        <button data-close data-chip="missing" class="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Review vehicles</button>
+        <button data-close id="confirm-save" class="rounded-lg bg-amber-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-amber-700">Save anyway</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="pointer-events-none fixed right-6 top-20 z-50 hidden items-center gap-2 rounded-lg bg-slate-900 px-4 py-3 text-sm text-white shadow-lg">
+    <i class="fa-solid fa-circle-check text-green-400"></i> Saved. Syncing with bid engine…
+  </div>
+
+  <script>
+    const vehicles = [
+      { id: 1, desc: "2021 Ford F-150 XLT SuperCrew", vin: "1FTEW1EP5MFA12345", stock: "FL-20931", seller: "Enterprise Fleet", floor: 31500, ams: 31500, pmr: 33800, lights: ["green"], run: 101 },
+      { id: 2, desc: "2020 Chevrolet Silverado 1500 LT", vin: "3GCUYDED8LG204511", stock: "FL-20944", seller: "Enterprise Fleet", floor: null, ams: 0, pmr: 29900, lights: ["yellow"], run: 102 },
+      { id: 3, desc: "2022 Toyota Camry SE", vin: "4T1G11AK2NU601932", stock: "LR-11872", seller: "Toyota Financial", floor: 22000, ams: 21500, pmr: 23400, lights: ["green", "blue"], run: 103 },
+      { id: 4, desc: "2019 Nissan Rogue SV AWD", vin: "5N1AT2MV7KC740112", stock: "LR-11880", seller: "Nissan Motor Acceptance", floor: 15800, ams: 15800, pmr: 16250, lights: ["green"], run: 104 },
+      { id: 5, desc: "2021 Ram ProMaster 2500 High Roof", vin: "3C6LRVDG4ME512309", stock: "FL-20952", seller: "Penske Leasing", floor: 34000, ams: 32000, pmr: 31800, lights: ["red"], run: 105 },
+      { id: 6, desc: "2018 Honda Accord EX-L", vin: "1HGCV1F59JA092118", stock: "DL-00412", seller: "Smith Honda", floor: null, ams: 0, pmr: 19800, lights: [], run: 106 },
+      { id: 7, desc: "2023 Hyundai Tucson SEL", vin: "5NMJB3AE1PH188273", stock: "LR-11891", seller: "Hyundai Capital", floor: 24200, ams: 24200, pmr: 26100, lights: ["green", "blue"], run: 107 },
+      { id: 8, desc: "2020 Ford Transit 250 Cargo", vin: "1FTBR2C80LKA66410", stock: "FL-20960", seller: "Penske Leasing", floor: 27500, ams: 27500, pmr: 28900, lights: ["yellow"], run: 108 },
+      { id: 9, desc: "2021 Jeep Grand Cherokee Limited", vin: "1C4RJFBG3MC601847", stock: "LR-11903", seller: "Ally Financial", floor: 30500, ams: 29000, pmr: 30100, lights: ["green"], run: 109 },
+      { id: 10, desc: "2017 Toyota Tacoma TRD Off-Road", vin: "3TMCZ5AN6HM071512", stock: "DL-00419", seller: "Smith Honda", floor: null, ams: 0, pmr: 27600, lights: ["green"], run: 110 },
+      { id: 11, desc: "2022 Kia Telluride EX", vin: "5XYP34HC1NG291034", stock: "LR-11911", seller: "Kia Motors Finance", floor: 36800, ams: 36800, pmr: 38900, lights: ["green", "blue"], run: 111 },
+      { id: 12, desc: "2020 GMC Sierra 2500HD Denali", vin: "1GT49REY4LF128860", stock: "FL-20977", seller: "Enterprise Fleet", floor: 52000, ams: 50000, pmr: 54500, lights: ["yellow", "blue"], run: 112 },
+    ].map((v) => ({ ...v, original: v.floor }));
+
+    const lightStyles = {
+      green: ["bg-green-500", "Green light: ride and drive"],
+      yellow: ["bg-yellow-400", "Yellow light: announcements"],
+      red: ["bg-red-500", "Red light: as-is"],
+      blue: ["bg-blue-500", "Blue light: title absent"],
+    };
+
+    const money = (n) => (n == null ? "—" : "$" + Math.round(n).toLocaleString());
+    const selected = new Set();
+    let chip = "all";
+
+    const isMissing = (v) => !v.floor;
+    const isChanged = (v) => v.floor && v.ams && v.floor !== v.ams;
+
+    function render() {
+      const q = document.getElementById("search").value.toLowerCase();
+      const rows = vehicles.filter((v) => {
+        if (chip === "missing" && !isMissing(v)) return false;
+        if (chip === "changed" && !isChanged(v)) return false;
+        return [v.desc, v.vin, v.stock].some((s) => s.toLowerCase().includes(q));
+      });
+
+      document.getElementById("showing").textContent = rows.length ? `1–${rows.length}` : "0";
+
+      document.getElementById("rows").innerHTML = rows.map((v) => {
+        const pct = v.floor ? Math.round((v.floor / v.pmr) * 100) : null;
+        const diff = v.floor && v.ams ? v.floor - v.ams : 0;
+        const missing = isMissing(v);
+        const dirty = v.floor !== v.original;
+        const pctColor = pct == null ? "" : pct > 100 ? "bg-orange-500" : pct >= 90 ? "bg-green-500" : "bg-slate-400";
+
+        return `
+          <tr class="${missing ? "bg-red-50/60" : selected.has(v.id) ? "bg-blue-50/60" : "hover:bg-slate-50"}">
+            <td class="relative py-3 pl-4">
+              ${missing ? '<span class="absolute inset-y-0 left-0 w-1 bg-red-500"></span>' : ""}
+              <input type="checkbox" data-select="${v.id}" ${selected.has(v.id) ? "checked" : ""} class="rounded border-slate-300" aria-label="Select ${v.desc}">
+            </td>
+            <td class="px-3 py-3">
+              <div class="font-medium text-slate-900">${v.desc}</div>
+              <div class="mt-0.5 flex gap-3 text-xs text-slate-500">
+                <span class="font-mono">${v.vin}</span><span>Stock ${v.stock}</span>
+              </div>
+            </td>
+            <td class="px-3 py-3 text-slate-700">${v.seller}</td>
+            <td class="px-3 py-3">
+              <div class="relative">
+                <span class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                <input type="number" step="100" data-floor="${v.id}" value="${v.floor ?? ""}" placeholder="No floor"
+                  class="w-full rounded-md border py-1.5 pl-6 pr-2 text-sm tabular-nums focus:outline-none focus:ring-2
+                    ${missing ? "border-red-400 placeholder:text-red-400 focus:border-red-500 focus:ring-red-500/20"
+                      : dirty ? "border-amber-400 bg-amber-50 focus:border-amber-500 focus:ring-amber-500/20"
+                      : "border-slate-300 focus:border-blue-500 focus:ring-blue-500/20"}">
+              </div>
+              <div class="mt-1 text-xs ${missing ? "text-red-700" : "text-slate-500"}">
+                ${missing ? "Sells absolute"
+                  : `AMS ${money(v.ams || null)}${diff ? ` <span class="font-medium text-amber-700">(${diff > 0 ? "+" : "−"}${money(Math.abs(diff))})</span>` : ""}`}
+              </div>
+            </td>
+            <td class="px-3 py-3 text-right tabular-nums text-slate-700">${money(v.pmr)}</td>
+            <td class="px-3 py-3">
+              ${pct == null ? '<span class="text-slate-400">—</span>' : `
+                <div class="flex items-center gap-2">
+                  <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100"><div class="h-full ${pctColor}" style="width:${Math.min(pct, 100)}%"></div></div>
+                  <span class="w-10 text-right text-xs tabular-nums ${pct > 100 ? "font-semibold text-orange-600" : "text-slate-600"}">${pct}%</span>
+                </div>`}
+            </td>
+            <td class="px-3 py-3">
+              <div class="flex gap-1">
+                ${v.lights.length ? v.lights.map((l) => `<span class="h-3 w-3 rounded-full ${lightStyles[l][0]}" title="${lightStyles[l][1]}"></span>`).join("") : '<span class="text-xs text-slate-400">None</span>'}
+              </div>
+            </td>
+            <td class="px-3 py-3 pr-4 text-right tabular-nums text-slate-700">${v.run}</td>
+          </tr>`;
+      }).join("");
+
+      document.querySelectorAll("#chips .chip").forEach((c) => {
+        const on = c.dataset.chip === chip;
+        c.classList.toggle("bg-slate-900", on);
+        c.classList.toggle("text-white", on);
+        c.classList.toggle("text-slate-600", !on);
+      });
+
+      document.getElementById("missing-count").textContent = vehicles.filter(isMissing).length;
+      document.getElementById("changed-count").textContent = vehicles.filter(isChanged).length;
+
+      const n = selected.size;
+      document.getElementById("selected-count").textContent = n;
+      document.getElementById("toolbar").classList.toggle("hidden", n > 0);
+      document.getElementById("bulkbar").classList.toggle("hidden", n === 0);
+      document.getElementById("bulkbar").classList.toggle("flex", n > 0);
+      document.getElementById("select-all").checked = n > 0 && n === rows.length;
+
+      const dirtyCount = vehicles.filter((v) => v.floor !== v.original).length;
+      document.getElementById("dirty-count").textContent = dirtyCount;
+      document.getElementById("savebar").classList.toggle("translate-y-full", dirtyCount === 0);
+    }
+
+    document.addEventListener("click", (ev) => {
+      const c = ev.target.closest("[data-chip]");
+      if (c) { chip = c.dataset.chip; selected.clear(); render(); }
+      if (ev.target.closest("[data-close]") || ev.target.id === "confirm-modal") {
+        document.getElementById("confirm-modal").classList.replace("flex", "hidden");
+      }
+    });
+
+    document.addEventListener("change", (ev) => {
+      const s = ev.target.dataset.select;
+      if (s) { ev.target.checked ? selected.add(+s) : selected.delete(+s); render(); }
+      const f = ev.target.dataset.floor;
+      if (f) {
+        const v = vehicles.find((x) => x.id === +f);
+        v.floor = ev.target.value ? +ev.target.value : null;
+        render();
+      }
+    });
+
+    document.getElementById("select-all").addEventListener("change", (ev) => {
+      document.querySelectorAll("[data-select]").forEach((cb) => ev.target.checked ? selected.add(+cb.dataset.select) : selected.delete(+cb.dataset.select));
+      render();
+    });
+    document.getElementById("bulk-clear").addEventListener("click", () => { selected.clear(); render(); });
+    document.getElementById("bulk-ams").addEventListener("click", () => {
+      vehicles.forEach((v) => { if (selected.has(v.id) && v.ams) v.floor = v.ams; });
+      selected.clear(); render();
+    });
+    document.getElementById("discard").addEventListener("click", () => { vehicles.forEach((v) => (v.floor = v.original)); render(); });
+
+    function commit() {
+      vehicles.forEach((v) => (v.original = v.floor));
+      render();
+      const t = document.getElementById("toast");
+      t.classList.replace("hidden", "flex");
+      setTimeout(() => t.classList.replace("flex", "hidden"), 2500);
+    }
+    document.getElementById("save").addEventListener("click", () => {
+      const missing = vehicles.filter(isMissing).length;
+      if (!missing) return commit();
+      document.getElementById("confirm-missing").textContent = missing;
+      document.getElementById("confirm-modal").classList.replace("hidden", "flex");
+    });
+    document.getElementById("confirm-save").addEventListener("click", commit);
+    document.getElementById("search").addEventListener("input", render);
+    render();
+  </script>
+</body>
+</html>

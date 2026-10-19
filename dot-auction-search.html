@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AAA365 St Louis · .Auction search (Grus mockup)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com?plugins=line-clamp"></script>
+  <script>
+    tailwind.config = { theme: { extend: { fontFamily: { sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"] } } } };
+  </script>
+  <style>
+    @keyframes ring-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(38, 97, 168, 0.0); } 50% { box-shadow: 0 0 0 4px rgba(38, 97, 168, 0.35); } }
+    .ring-pulse { animation: ring-pulse 2.3s infinite; }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
+
+  <!-- Site header (edgepipeline.com) -->
+  <header class="bg-[#2661A8]">
+    <div class="mx-auto flex h-14 max-w-7xl items-center gap-6 px-6 text-white">
+      <span class="grid h-8 w-8 place-items-center rounded-md bg-white/15"><i class="fa-solid fa-layer-group"></i></span>
+      <div class="relative hidden w-56 md:block">
+        <i class="fa-solid fa-magnifying-glass pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-white/70"></i>
+        <input type="search" placeholder="Quick search" class="w-full rounded-full border border-white/40 bg-white/10 py-1.5 pl-8 pr-3 text-sm text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-white/40">
+      </div>
+      <nav class="ml-auto hidden items-center gap-5 text-sm lg:flex">
+        <a href="#" class="hover:underline">Search</a>
+        <a href="#" class="hover:underline">Research <i class="fa-solid fa-caret-down text-xs"></i></a>
+        <a href="#" class="hover:underline">Seller Portal <i class="fa-solid fa-caret-down text-xs"></i></a>
+        <a href="#" class="hover:underline">My Purchases <i class="fa-solid fa-caret-down text-xs"></i></a>
+        <a href="#" class="hover:underline">My Watch List</a>
+        <a href="#" class="rounded-full bg-white px-3 py-1 text-sm font-medium text-[#2661A8]">Buy Now <span class="text-xs text-slate-500">(75,058)</span></a>
+      </nav>
+      <span class="grid h-8 w-8 place-items-center rounded-full bg-white/20 text-xs font-semibold">JS</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-7xl px-6 py-8">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <p class="text-sm font-semibold tracking-tight text-slate-500"><span class="rounded bg-red-600 px-1 py-0.5 text-[10px] font-bold text-white">EDGE</span> .Auction</p>
+        <h1 class="mt-1 text-3xl font-semibold tracking-tight">AAA365 St Louis</h1>
+        <p class="mt-1 text-sm text-slate-500">Timed online event · Ends Tue, Oct 20 at 2:00 PM CDT</p>
+      </div>
+      <a href="index.html" class="text-sm text-slate-500 hover:text-slate-800"><i class="fa-solid fa-arrow-left mr-1 text-xs"></i>All mockups</a>
+    </div>
+
+    <div class="mt-4 flex flex-wrap gap-2">
+      <span class="inline-flex items-center gap-1.5 rounded-full bg-[#2661A8] px-3 py-1 text-xs font-medium text-white">
+        Event: AAA365 St Louis <button class="grid h-4 w-4 place-items-center rounded-full bg-white/20 hover:bg-white/30" aria-label="Remove filter"><i class="fa-solid fa-xmark text-[9px]"></i></button>
+      </span>
+    </div>
+
+    <div class="mt-6 flex gap-6">
+      <!-- Filters -->
+      <aside class="hidden w-60 shrink-0 lg:block">
+        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white text-sm shadow-sm">
+          <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+            <h2 class="font-semibold">Filters</h2>
+            <button class="text-xs font-medium text-blue-700 hover:underline">Clear all</button>
+          </div>
+          <label class="flex cursor-pointer items-center justify-between border-b border-slate-100 px-4 py-3">
+            <span>Watch list only</span>
+            <input type="checkbox" class="peer sr-only">
+            <span class="relative h-5 w-9 rounded-full bg-slate-200 transition after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:shadow after:transition peer-checked:bg-blue-600 peer-checked:after:translate-x-4"></span>
+          </label>
+          <div id="filter-list"></div>
+        </div>
+      </aside>
+
+      <!-- Results -->
+      <section class="min-w-0 flex-1">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <span id="count" class="text-sm text-slate-600"></span>
+          <div class="flex items-center gap-3 text-sm">
+            <label class="flex items-center gap-2 text-slate-500">Sort by
+              <select class="rounded-lg border border-slate-300 bg-white py-1.5 pl-3 pr-8 text-sm text-slate-800 shadow-sm">
+                <option>Distance</option><option>Make, Model, Year</option><option>Year, Make, Model</option>
+                <option>Run Number</option><option>Odometer</option><option>State, City</option>
+              </select>
+            </label>
+            <label class="flex items-center gap-2 text-slate-500">Show
+              <select class="rounded-lg border border-slate-300 bg-white py-1.5 pl-3 pr-8 text-sm text-slate-800 shadow-sm"><option>25</option><option selected>50</option><option>100</option></select>
+            </label>
+          </div>
+        </div>
+        <div id="results" class="mt-4 space-y-4"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Proxy modal -->
+  <div id="proxy-modal" class="fixed inset-0 z-50 hidden items-end justify-center bg-slate-900/50 p-0 sm:items-center sm:p-4"></div>
+
+  <!-- Announcement modal -->
+  <div id="announce-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 p-4">
+    <div class="w-full max-w-lg rounded-xl bg-white shadow-xl" role="dialog" aria-modal="true" aria-labelledby="announce-title">
+      <div class="flex items-start justify-between border-b border-slate-200 px-5 py-4">
+        <div>
+          <h2 id="announce-title" class="font-semibold">Announcements</h2>
+          <p id="announce-vehicle" class="mt-0.5 text-sm text-slate-500"></p>
+        </div>
+        <button data-announce-close class="grid h-8 w-8 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p id="announce-body" class="whitespace-pre-line px-5 py-4 text-sm text-slate-700"></p>
+    </div>
+  </div>
+
+  <!-- Toasts -->
+  <div id="toasts" class="pointer-events-none fixed bottom-4 left-1/2 z-[60] flex w-full max-w-sm -translate-x-1/2 flex-col gap-2 px-4"></div>
+
+  <!-- Mock controls -->
+  <div class="fixed bottom-4 right-4 z-40 w-80 overflow-hidden rounded-xl border border-fuchsia-200 bg-white text-sm shadow-xl">
+    <button id="mock-toggle" class="flex w-full items-center justify-between bg-fuchsia-600 px-4 py-2 font-semibold text-white">
+      <span><i class="fa-solid fa-flask mr-2"></i>Mock controls</span><i id="mock-chevron" class="fa-solid fa-chevron-down text-xs"></i>
+    </button>
+    <div id="mock-body" class="max-h-[70vh] space-y-4 overflow-y-auto p-4">
+      <fieldset>
+        <legend class="text-xs font-semibold uppercase tracking-wide text-slate-500">Viewer</legend>
+        <div id="viewer-options" class="mt-2 space-y-1.5"></div>
+      </fieldset>
+      <div class="space-y-2">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Simulate</p>
+        <button data-action="simulate" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-left font-medium hover:bg-slate-50"><i class="fa-solid fa-gavel mr-2 text-slate-400"></i>Another dealer bids on every open vehicle</button>
+        <button data-action="reset" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-left font-medium hover:bg-slate-50"><i class="fa-solid fa-rotate-left mr-2 text-slate-400"></i>Reset mock data</button>
+      </div>
+      <ul class="list-disc space-y-1 pl-4 text-xs text-slate-500">
+        <li>Pick <b>Sam Lee</b> on the Escalade to see the seller state.</li>
+        <li>Set a proxy, then simulate a competing bid to watch it respond.</li>
+        <li>The Buick doesn't accept AuctionACCESS, so it lists 2 bidders, not 3.</li>
+        <li>The F-150 opens in under a minute; the Malibu is in anti-snipe.</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const S = 1000, M = 60 * S, H = 60 * M;
+    const AUCTION = "AAA365 St Louis";
+
+    const BIDDERS = {
+      multi: [
+        { id: "b1", name: "Acme Motors — John Smith", via: AUCTION },
+        { id: "b2", name: "Acme Motors — Sam Lee", via: AUCTION },
+        { id: "b3", name: "Gateway Auto Sales — John Smith", via: "AuctionACCESS" },
+      ],
+      single: [{ id: "b1", name: "Acme Motors — John Smith", via: AUCTION }],
+    };
+
+    const VIEWERS = [
+      ["multi", "Registered · 3 bidders", "Includes an AuctionACCESS bidder"],
+      ["single", "Registered · 1 bidder", "Auto-selected, no dropdown"],
+      ["pending", "Registration pending", null],
+      ["unregistered", "Signed in · not registered", null],
+      ["public", "Public user", null],
+      ["loading", "Loading bidder info", null],
+    ];
+
+    const FILTERS = ["Auction types", "Event", "Lane", "Categories", "Condition", "Make", "Model", "Odometer", "Hours", "Year", "Distance", "States", "Fuel types", "Title status", "Consignor"];
+
+    function seed() {
+      const t = Date.now();
+      const base = () => ({ hours: null, proxies: {}, active: [], badge: null, watch: false, sellers: [], aa: true, startsAt: null });
+      return [
+        { ...base(), id: "sl1", title: "2003 Buick Century Custom FWD 4D Sedan 3.1L V6", vin: "2G4WS52J031232172", color: "White", odo: 133554, titleStatus: "Title Absent", stock: "1340421", run: "YL-0014", city: "East St. Louis, IL", seller: "Midwest Fleet Services", lights: ["blue"], photos: 24, img: "from-slate-300 to-slate-500",
+          announcements: "Title absent. Check engine light on.", aa: false,
+          status: "ASKING", bid: 700, increment: 100, floor: 900, endsAt: t + 23 * H },
+        { ...base(), id: "sl2", title: "2016 Cadillac Escalade ESV Premium Collection 4WD 6.2L V8", vin: "1GYS4KJ6GR373696", color: "Black", odo: 179278, titleStatus: "Title Absent", stock: "1340299", run: "YL-0002", city: "East St. Louis, IL", seller: "Acme Motors", lights: ["yellow", "blue"], photos: 31, img: "from-zinc-600 to-zinc-900",
+          announcements: "Title absent. Rear entertainment system inoperable. Third-row seat has a tear in the driver-side bolster. Frame damage previously repaired per seller disclosure; inspection report available on request.",
+          status: "BIDDING", bid: 5500, increment: 250, floor: 7000, endsAt: t + 23 * H, badge: "other", sellers: ["b2"] },
+        { ...base(), id: "sl3", title: "2018 Chevrolet Malibu LS FWD 4D Sedan 1.5L Turbo", vin: "1G1ZB5ST9JF127763", color: "Blue", odo: 113272, titleStatus: "Title Absent", stock: "1338355", run: "YL-0057", city: "East St. Louis, IL", seller: "Midwest Fleet Services", lights: ["green"], photos: 18, img: "from-blue-800 to-slate-900",
+          announcements: "",
+          status: "ANTI-SNIPE", bid: 3700, increment: 100, floor: 3500, endsAt: t + 75 * S, badge: "b1", active: ["b1"], proxies: { b1: 4200 }, watch: true },
+        { ...base(), id: "sl4", title: "2019 Ford F-150 XL SuperCab 4WD 5.0L V8", vin: "1FTEX1EP4KKD20931", color: "Oxford White", odo: 88410, titleStatus: "On Site", stock: "1341102", run: "YL-0061", city: "East St. Louis, IL", seller: "Enterprise Fleet", lights: ["green"], photos: 27, img: "from-slate-400 to-slate-600",
+          announcements: "Bed liner. Tow package.",
+          status: "NOT-STARTED", bid: 12000, increment: 250, floor: 15000, startsAt: t + 45 * S, endsAt: t + 45 * S + 23 * H },
+        { ...base(), id: "sl5", title: "2015 Honda Civic LX 4D Sedan 1.8L", vin: "19XFB2F57FE209114", color: "Silver", odo: 121904, titleStatus: "On Site", stock: "1337720", run: "YL-0008", city: "East St. Louis, IL", seller: "Smith Honda", lights: ["green"], photos: 22, img: "from-emerald-700 to-emerald-900",
+          announcements: "",
+          status: "SOLD", bid: 6400, increment: 100, floor: 6000, endsAt: t - 2 * H, badge: "b1", active: ["b1"], watch: true },
+        { ...base(), id: "sl6", title: "2017 Nissan Altima 2.5 S 4D Sedan", vin: "1N4AL3AP5HC218805", color: "Red", odo: 96530, titleStatus: "On Site", stock: "1337998", run: "YL-0011", city: "East St. Louis, IL", seller: "Nissan Motor Acceptance", lights: ["yellow"], photos: 20, img: "from-red-700 to-red-950",
+          announcements: "Minor hail damage on hood and roof.",
+          status: "OFFER", bid: 5100, increment: 100, floor: 5800, endsAt: t - 1 * H, badge: "other", active: ["b1"] },
+      ];
+    }
+
+    let vehicles = seed();
+    let viewer = "multi";
+    let selected = {};
+    let lastBidder = null;
+    let confirming = {};
+    let priceChanged = {};
+    let modal = null;
+    let sigs = {};
+
+    // ---------- Derived state (mirrors grus useItem / StatusLabel) ----------
+    const money = (n) => "$" + Math.round(n).toLocaleString();
+    const secsUntil = (ts) => Math.max(0, Math.round((ts - Date.now()) / 1000));
+    const find = (id) => vehicles.find((v) => v.id === id);
+    const live = (v) => ["BIDDING", "ANTI-SNIPE"].includes(v.status);
+    const enabled = (v) => ["ASKING", "BIDDING", "ANTI-SNIPE"].includes(v.status);
+    const ended = (v) => ["SOLD", "NOT-SOLD", "OFFER"].includes(v.status);
+    const nextBid = (v) => (v.status === "ASKING" || v.status === "NOT-STARTED" ? v.bid : v.bid + v.increment);
+    const floorMet = (v) => live(v) && v.bid >= v.floor;
+    const winning = (v, b) => !!b && v.badge === b;
+    const losing = (v, b) => !!b && v.active.includes(b) && !winning(v, b);
+    const registered = () => viewer === "multi" || viewer === "single";
+    const biddersFor = (v) => (BIDDERS[viewer] || []).filter((b) => v.aa || b.via !== "AuctionACCESS");
+    const bidderName = (id) => (BIDDERS.multi.find((b) => b.id === id) || {}).name || "another bidder";
+    const short = (v) => v.title.split(" ").slice(0, 3).join(" ");
+
+    function selectedFor(v) {
+      const list = biddersFor(v);
+      if (list.length === 1) return list[0].id;
+      const s = selected[v.id] ?? lastBidder;
+      return list.some((b) => b.id === s) ? s : null;
+    }
+
+    function distance(s) {
+      if (s < 60) return `${s} second${s === 1 ? "" : "s"}`;
+      const m = Math.round(s / 60);
+      if (m < 60) return `${m} minute${m === 1 ? "" : "s"}`;
+      const h = Math.round(s / 3600);
+      if (h < 24) return `${h} hour${h === 1 ? "" : "s"}`;
+      const d = Math.round(s / 86400);
+      return `${d} day${d === 1 ? "" : "s"}`;
+    }
+
+    function timeText(v) {
+      if (v.status === "NOT-STARTED") return `Starts in ${distance(secsUntil(v.startsAt))}`;
+      if (ended(v)) return "Ended";
+      const s = secsUntil(v.endsAt);
+      if (s <= 600) return `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, "0")}s left`;
+      return `${distance(s)} left`;
+    }
+
+    function timeClass(v) {
+      const s = enabled(v) ? secsUntil(v.endsAt) : Infinity;
+      return `text-xs font-medium tabular-nums ${s <= 10 ? "text-red-600" : s <= 60 ? "text-amber-700" : "text-slate-600"}`;
+    }
+
+    function bar(v) {
+      if (!enabled(v)) return null;
+      const s = secsUntil(v.endsAt);
+      if (s <= 10) return { pct: (s / 10) * 100, bg: "bg-red-200", fg: "bg-red-500" };
+      if (s <= 60) return { pct: (s / 60) * 100, bg: "bg-amber-200", fg: "bg-amber-500" };
+      if (s <= 600) return { pct: (s / 600) * 100, bg: "bg-green-200", fg: "bg-green-500" };
+      return null;
+    }
+
+    const sig = (v) => `${v.status}|${v.status === "NOT-STARTED" ? secsUntil(v.startsAt) > 29 : ""}|${bar(v)?.fg || ""}`;
+
+    function statusLabel(v, b) {
+      if (live(v)) {
+        if (winning(v, b)) return ["green", "fa-circle-check", "You're winning", `High bidder: ${bidderName(b)}`];
+        if (losing(v, b)) return ["red", "fa-circle-xmark", "Outbid", `Bid ${money(nextBid(v))} to retake the lead`];
+      }
+      if (v.status === "SOLD") {
+        if (winning(v, b)) return ["green", "fa-trophy", "Sold — you won", `Your winning bid: ${money(v.bid)}`];
+        if (losing(v, b)) return ["red", "fa-circle-xmark", "Sold — outbid", null];
+        return ["slate", "fa-flag-checkered", "Sold", null];
+      }
+      if (v.status === "NOT-SOLD") return ["slate", "fa-flag-checkered", "Not sold", null];
+      if (v.status === "OFFER") {
+        if (winning(v, b)) return ["amber", "fa-circle-exclamation", "On offer", `Your ${money(v.bid)} bid is with the seller for review`];
+        if (losing(v, b)) return ["orange", "fa-circle-exclamation", "On offer — outbid", null];
+        return ["slate", "fa-circle-exclamation", "On offer", null];
+      }
+      return null;
+    }
+
+    const TONES = {
+      green: "bg-green-50 text-green-800 ring-green-600/20",
+      red: "bg-red-50 text-red-800 ring-red-600/20",
+      amber: "bg-amber-50 text-amber-800 ring-amber-600/20",
+      orange: "bg-orange-50 text-orange-800 ring-orange-600/20",
+      slate: "bg-slate-100 text-slate-700 ring-slate-500/20",
+      blue: "bg-blue-50 text-blue-800 ring-blue-600/20",
+    };
+
+    function notice(tone, icon, title, detail) {
+      return `
+        <div class="mt-3 rounded-lg px-3 py-2 text-sm ring-1 ring-inset ${TONES[tone]}">
+          <p class="font-semibold"><i class="fa-solid ${icon} mr-1.5"></i>${title}</p>
+          ${detail ? `<p class="mt-0.5 text-xs opacity-90">${detail}</p>` : ""}
+        </div>`;
+    }
+
+    // ---------- Bid panel ----------
+    function priceBlock(v) {
+      if (v.status === "NOT-STARTED") return `<p class="mt-3 text-sm text-slate-600">Bidding hasn't started yet.</p>`;
+      if (ended(v)) return "";
+      const label = v.status === "ASKING" ? "Asking" : "Current bid";
+      const sub = v.status === "ASKING" ? "No bids yet" : `${money(v.increment)} bid increments`;
+      return `
+        <div class="mt-3">
+          <p class="text-xs text-slate-500">${label}</p>
+          <p class="text-2xl font-semibold tabular-nums">${money(v.bid)}</p>
+          <p class="text-xs text-slate-500">${sub}</p>
+        </div>`;
+    }
+
+    function bidderControl(v, b) {
+      const list = biddersFor(v);
+      if (list.length === 1) return `<p class="mt-3 text-xs text-slate-500">Bidding as <span class="font-medium text-slate-800">${list[0].name}</span></p>`;
+      const groups = [...new Set(list.map((x) => x.via))];
+      return `
+        <label for="bidder-${v.id}" class="mt-3 block text-xs font-medium text-slate-600">Bidding as</label>
+        <select id="bidder-${v.id}" data-bidder-select="${v.id}"
+          class="mt-1 w-full rounded-lg border bg-white py-2 pl-3 pr-8 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20
+                 ${b ? "border-slate-300 focus:border-blue-500" : "ring-pulse border-[#2661A8] text-slate-500"}">
+          <option value="" disabled ${b ? "" : "selected"}>Select a bidder (${list.length} available)</option>
+          ${groups.map((g) => `
+            <optgroup label="${g === "AuctionACCESS" ? "Via AuctionACCESS" : g}">
+              ${list.filter((x) => x.via === g).map((x) => `<option value="${x.id}" ${x.id === b ? "selected" : ""}>${x.name}</option>`).join("")}
+            </optgroup>`).join("")}
+        </select>`;
+    }
+
+    function actions(v, b) {
+      if (ended(v)) return "";
+      if (b && v.sellers.includes(b)) return notice("blue", "fa-circle-info", "You're the seller", "Pick a different bidder to bid on this vehicle.");
+
+      let html = "";
+      if (enabled(v)) {
+        const nb = nextBid(v);
+        if (!b) {
+          html += `<button disabled class="w-full cursor-not-allowed rounded-lg bg-slate-200 py-2.5 text-sm font-semibold text-slate-500">Bid ${money(nb)}</button>`;
+        } else if (winning(v, b)) {
+          html += `<button disabled class="w-full cursor-default rounded-lg bg-green-100 py-2.5 text-sm font-semibold text-green-800"><i class="fa-solid fa-check mr-1.5"></i>Bid placed · ${money(v.bid)}</button>`;
+        } else if (confirming[v.id] === nb) {
+          html += `
+            <div class="flex gap-2">
+              <button data-action="confirm-bid" data-id="${v.id}" class="flex-1 rounded-lg bg-green-700 py-2.5 text-sm font-semibold text-white ring-2 ring-green-300 hover:bg-green-800">Confirm ${money(nb)}</button>
+              <button data-action="cancel-bid" data-id="${v.id}" class="rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</button>
+            </div>`;
+        } else {
+          html += `<button data-action="bid" data-id="${v.id}" class="w-full rounded-lg bg-green-600 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-green-700">Bid ${money(nb)}</button>`;
+          if (priceChanged[v.id]) html += `<p class="mt-1 text-xs text-amber-700"><i class="fa-solid fa-triangle-exclamation mr-1"></i>The price changed. Review the new amount.</p>`;
+        }
+      }
+
+      const s = v.status === "NOT-STARTED" ? secsUntil(v.startsAt) : null;
+      if (enabled(v) || (s !== null && s > 29)) {
+        const p = b && v.proxies[b];
+        html += `
+          <button data-action="proxy" data-id="${v.id}" ${b ? "" : "disabled"}
+            class="mt-2 w-full rounded-lg border border-[#2661A8] bg-white py-2 text-sm font-medium text-[#2661A8] hover:bg-blue-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400 disabled:hover:bg-white">
+            <i class="fa-solid fa-robot mr-1.5 text-xs"></i>${p ? `Edit proxy · up to ${money(p)}` : "Set proxy bid"}
+          </button>`;
+      } else if (s !== null) {
+        html += `<button disabled class="mt-2 w-full cursor-not-allowed rounded-lg border border-slate-200 bg-white py-2 text-sm font-medium text-slate-400"><span data-proxy-countdown="${v.id}">Proxy opens in ${s}s</span></button>`;
+      }
+
+      if (!b) html += `<p class="mt-1.5 text-center text-xs text-slate-500">Choose a bidder above to bid.</p>`;
+      return `<div class="mt-3">${html}</div>`;
+    }
+
+    function gate(v) {
+      if (viewer === "loading") {
+        return `<div class="mt-3 animate-pulse space-y-2"><div class="h-9 rounded-lg bg-slate-200"></div><div class="h-10 rounded-lg bg-slate-200"></div></div>`;
+      }
+      if (ended(v)) return "";
+      if (viewer === "unregistered") {
+        return `
+          <div class="mt-3">
+            <button data-action="register" data-id="${v.id}" class="w-full rounded-lg bg-green-600 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-green-700">Register to bid</button>
+            <p class="mt-1.5 text-center text-xs text-slate-500">Register with ${AUCTION} to bid on this vehicle.</p>
+          </div>`;
+      }
+      if (viewer === "pending") return notice("amber", "fa-hourglass-half", "Registration pending", `You can bid once ${AUCTION} approves your registration.`);
+      if (viewer === "public") return notice("slate", "fa-lock", "Bidding isn't available to the public", null);
+      return "";
+    }
+
+    function panel(v) {
+      const b = registered() ? selectedFor(v) : null;
+      const label = statusLabel(v, b);
+      const tb = bar(v);
+      return `
+        <div class="flex items-center justify-between gap-2">
+          <span data-time="${v.id}" class="${timeClass(v)}"><i class="fa-regular fa-clock mr-1"></i>${timeText(v)}</span>
+          ${floorMet(v) ? `<span class="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700"><i class="fa-solid fa-check mr-1"></i>Floor met</span>` : ""}
+        </div>
+        <div data-bar-wrap="${v.id}" class="mt-1.5 h-1.5 overflow-hidden rounded-full ${tb ? tb.bg : "hidden"}">
+          <div data-bar="${v.id}" class="h-full transition-all duration-700 ${tb ? tb.fg : ""}" style="width:${tb ? tb.pct : 0}%"></div>
+        </div>
+        ${priceBlock(v)}
+        ${label ? notice(...label) : ""}
+        ${registered() ? bidderControl(v, b) + actions(v, b) : gate(v)}`;
+    }
+
+    // ---------- Card ----------
+    const LIGHTS = { green: ["bg-green-500", "Green light"], yellow: ["bg-yellow-400", "Yellow light"], red: ["bg-red-500", "Red light"], blue: ["bg-blue-500", "Blue light: title absent"] };
+
+    function card(v) {
+      const long = v.announcements.length > 60;
+      const shown = long ? v.announcements.slice(0, 60) + "…" : v.announcements;
+      return `
+        <article class="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm lg:flex-row">
+          <a href="#" class="relative block h-48 shrink-0 bg-gradient-to-br ${v.img} lg:h-auto lg:w-56">
+            <span class="absolute inset-0 grid place-items-center text-white/60"><i class="fa-solid fa-car-side text-6xl"></i></span>
+            <span class="absolute bottom-2 left-2 rounded bg-black/60 px-1.5 py-0.5 text-[11px] font-medium text-white"><i class="fa-solid fa-camera mr-1"></i>${v.photos}</span>
+          </a>
+
+          <div class="min-w-0 flex-1 p-4">
+            <div class="flex items-start gap-3">
+              <a href="#" class="line-clamp-2 flex-1 font-semibold text-[#2661A8] hover:underline">${v.title}</a>
+              <button data-action="watch" data-id="${v.id}" title="${v.watch ? "Remove from watch list" : "Add to watch list"}" aria-pressed="${v.watch}"
+                class="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[#2661A8] hover:bg-blue-50">
+                <i class="${v.watch ? "fa-solid" : "fa-regular"} fa-star"></i>
+              </button>
+            </div>
+            <p class="mt-0.5 text-xs text-slate-500"><span class="font-mono">${v.vin}</span> · ${v.color} exterior</p>
+
+            <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
+              <div><dt class="text-xs text-slate-500">Odometer</dt><dd class="font-medium tabular-nums">${v.odo.toLocaleString()} mi</dd></div>
+              <div><dt class="text-xs text-slate-500">Hours</dt><dd class="font-medium">${v.hours ?? "—"}</dd></div>
+              <div><dt class="text-xs text-slate-500">Title</dt><dd class="font-medium ${v.titleStatus === "Title Absent" ? "text-amber-700" : ""}">${v.titleStatus}</dd></div>
+              <div><dt class="text-xs text-slate-500">Stock #</dt><dd class="font-medium tabular-nums">${v.stock}</dd></div>
+              <div><dt class="text-xs text-slate-500">Run #</dt><dd class="font-medium">${v.run}</dd></div>
+              <div><dt class="text-xs text-slate-500">Location</dt><dd class="font-medium"><i class="fa-solid fa-location-dot mr-1 text-slate-400"></i>${v.city}</dd></div>
+            </dl>
+
+            <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+              <span class="flex items-center gap-1">${v.lights.map((l) => `<span class="h-2.5 w-2.5 rounded-full ${LIGHTS[l][0]}" title="${LIGHTS[l][1]}"></span>`).join("")}</span>
+              <span>Seller: <span class="text-slate-700">${v.seller}</span></span>
+            </div>
+
+            ${v.announcements ? `
+              <p class="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                <i class="fa-solid fa-bullhorn mr-1.5 text-slate-400"></i>${shown}
+                ${long ? `<button data-action="announce" data-id="${v.id}" class="ml-1 font-medium text-[#2661A8] hover:underline">Read all</button>` : ""}
+              </p>` : ""}
+          </div>
+
+          <div class="border-t border-slate-200 bg-slate-50/70 p-4 lg:w-72 lg:shrink-0 lg:border-l lg:border-t-0">${panel(v)}</div>
+        </article>`;
+    }
+
+    // ---------- Rendering ----------
+    function render() {
+      for (const v of vehicles) {
+        if (confirming[v.id] != null && confirming[v.id] !== nextBid(v)) {
+          delete confirming[v.id];
+          priceChanged[v.id] = true;
+        }
+      }
+      document.getElementById("results").innerHTML = vehicles.map(card).join("");
+      document.getElementById("count").textContent = `${vehicles.length} results`;
+      sigs = Object.fromEntries(vehicles.map((v) => [v.id, sig(v)]));
+    }
+
+    function updateTimers() {
+      for (const v of vehicles) {
+        const t = document.querySelector(`[data-time="${v.id}"]`);
+        if (t) { t.className = timeClass(v); t.innerHTML = `<i class="fa-regular fa-clock mr-1"></i>${timeText(v)}`; }
+        const tb = bar(v);
+        const wrap = document.querySelector(`[data-bar-wrap="${v.id}"]`);
+        const inner = document.querySelector(`[data-bar="${v.id}"]`);
+        if (wrap && inner) {
+          wrap.className = `mt-1.5 h-1.5 overflow-hidden rounded-full ${tb ? tb.bg : "hidden"}`;
+          inner.className = `h-full transition-all duration-700 ${tb ? tb.fg : ""}`;
+          inner.style.width = `${tb ? tb.pct : 0}%`;
+        }
+        const pc = document.querySelector(`[data-proxy-countdown="${v.id}"]`);
+        if (pc) pc.textContent = `Proxy opens in ${secsUntil(v.startsAt)}s`;
+      }
+    }
+
+    function tick() {
+      let changed = false;
+      for (const v of vehicles) {
+        if (v.status === "NOT-STARTED" && Date.now() >= v.startsAt) {
+          v.status = "ASKING";
+          changed = true;
+          toast(`Bidding is open on the ${short(v)}`);
+        }
+        if (enabled(v) && Date.now() >= v.endsAt) {
+          v.status = v.status === "ASKING" ? "NOT-SOLD" : v.bid >= v.floor ? "SOLD" : "OFFER";
+          delete confirming[v.id];
+          changed = true;
+        }
+      }
+      if (changed || vehicles.some((v) => sig(v) !== sigs[v.id])) render();
+      else updateTimers();
+    }
+
+    // ---------- Bidding actions ----------
+    function extendIfClosing(v) {
+      if (secsUntil(v.endsAt) < 60) {
+        v.endsAt = Date.now() + 60 * S;
+        v.status = "ANTI-SNIPE";
+      }
+    }
+
+    function placeBid(v, b, viaProxy = false) {
+      const amount = nextBid(v);
+      if (v.status === "ASKING") v.status = "BIDDING";
+      v.bid = amount;
+      v.badge = b;
+      if (!v.active.includes(b)) v.active.push(b);
+      extendIfClosing(v);
+      const added = !v.watch;
+      v.watch = true;
+      toast(`${viaProxy ? "Your proxy placed" : "Bid placed:"} ${money(amount)} on the ${short(v)}${added ? " · added to watch list" : ""}`, "green");
+    }
+
+    function competitorBid(v) {
+      if (!enabled(v)) return;
+      v.bid = nextBid(v);
+      v.badge = "other";
+      if (v.status === "ASKING") v.status = "BIDDING";
+      extendIfClosing(v);
+
+      const best = Object.entries(v.proxies)
+        .filter(([, max]) => max >= nextBid(v))
+        .sort((a, b) => b[1] - a[1])[0];
+      if (best) {
+        placeBid(v, best[0], true);
+      } else if (v.active.length) {
+        toast(`You've been outbid on the ${short(v)}`, "red");
+      }
+    }
+
+    // ---------- Proxy modal (mirrors grus ProxyBidForm) ----------
+    function openProxy(v) {
+      modal = { id: v.id, bidder: selectedFor(v), removing: false };
+      renderModal();
+    }
+
+    function closeProxy() {
+      modal = null;
+      renderModal();
+    }
+
+    function renderModal() {
+      const el = document.getElementById("proxy-modal");
+      if (!modal) { el.classList.add("hidden"); el.classList.remove("flex"); el.innerHTML = ""; return; }
+
+      const v = find(modal.id);
+      const existing = v.proxies[modal.bidder];
+      const min = enabled(v) ? nextBid(v) : 1;
+      const chips = enabled(v) ? [min, min + 4 * v.increment, min + 10 * v.increment] : [];
+
+      el.innerHTML = `
+        <div class="w-full max-w-md overflow-hidden rounded-t-xl bg-white shadow-xl sm:rounded-xl" role="dialog" aria-modal="true" aria-labelledby="proxy-title">
+          <div class="flex items-start justify-between border-b border-slate-200 px-5 py-4">
+            <div class="min-w-0">
+              <h2 id="proxy-title" class="font-semibold">${existing ? "Edit proxy bid" : "Set a proxy bid"}</h2>
+              <p class="mt-0.5 truncate text-sm text-slate-500">${v.title}</p>
+            </div>
+            <button data-modal-close class="grid h-8 w-8 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <div class="space-y-4 px-5 py-4">
+            <dl class="grid grid-cols-3 gap-3 rounded-lg bg-slate-50 p-3 text-sm">
+              <div><dt class="text-xs text-slate-500">${v.status === "ASKING" ? "Asking" : "Current bid"}</dt><dd class="font-semibold tabular-nums">${enabled(v) ? money(v.bid) : "—"}</dd></div>
+              <div><dt class="text-xs text-slate-500">Increment</dt><dd class="font-semibold tabular-nums">${money(v.increment)}</dd></div>
+              <div><dt class="text-xs text-slate-500">Your proxy</dt><dd class="font-semibold tabular-nums">${existing ? money(existing) : "None"}</dd></div>
+            </dl>
+            <p class="text-xs text-slate-500">Bidding as <span class="font-medium text-slate-800">${bidderName(modal.bidder)}</span></p>
+
+            <div>
+              <label for="proxy-amount" class="block text-sm font-medium text-slate-700">Maximum bid</label>
+              <div class="relative mt-1">
+                <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                <input id="proxy-amount" type="number" inputmode="numeric" min="${min}" step="${v.increment}" placeholder="${existing || min}"
+                  class="w-full rounded-lg border border-slate-300 py-2.5 pl-7 pr-3 text-lg tabular-nums focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+              </div>
+              <p id="proxy-error" class="mt-1 hidden text-xs text-red-600"></p>
+              ${chips.length ? `
+                <div class="mt-2 flex flex-wrap gap-2">
+                  ${chips.map((c) => `<button data-chip="${c}" class="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium tabular-nums text-slate-700 hover:border-blue-400 hover:text-blue-700">${money(c)}</button>`).join("")}
+                </div>` : ""}
+            </div>
+
+            <p class="text-xs text-slate-500"><i class="fa-solid fa-circle-info mr-1"></i>We'll bid for you one increment at a time, only as needed to keep you in the lead, up to your maximum.</p>
+          </div>
+
+          <div class="flex items-center gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3">
+            ${modal.removing ? `
+              <p class="flex-1 text-xs text-slate-600">Remove your ${money(existing)} proxy? This only applies to bids that aren't winning or haven't been placed.</p>
+              <button data-remove-cancel class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Keep</button>
+              <button data-remove-confirm class="rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700">Remove</button>
+            ` : `
+              ${existing ? `<button data-remove class="text-sm font-medium text-red-600 hover:text-red-700">Remove proxy</button>` : ""}
+              <div class="ml-auto flex gap-2">
+                <button data-modal-close class="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</button>
+                <button id="proxy-save" disabled class="rounded-lg bg-[#2661A8] px-3.5 py-2 text-sm font-medium text-white hover:bg-[#1f528f] disabled:cursor-not-allowed disabled:opacity-40">Save proxy</button>
+              </div>
+            `}
+          </div>
+        </div>`;
+
+      el.classList.remove("hidden");
+      el.classList.add("flex");
+
+      const input = el.querySelector("#proxy-amount");
+      const validate = () => {
+        const amount = Number(input.value);
+        const save = el.querySelector("#proxy-save");
+        const err = el.querySelector("#proxy-error");
+        const valid = input.value !== "" && amount >= min;
+        if (save) {
+          save.disabled = !valid;
+          save.textContent = valid ? `Save proxy · ${money(amount)}` : "Save proxy";
+        }
+        err.classList.toggle("hidden", input.value === "" || valid);
+        err.textContent = `Enter at least ${money(min)}.`;
+      };
+      input.addEventListener("input", validate);
+      input.addEventListener("keydown", (e) => { if (e.key === "Enter") el.querySelector("#proxy-save")?.click(); });
+      el.querySelectorAll("[data-chip]").forEach((c) => c.addEventListener("click", () => { input.value = c.dataset.chip; validate(); input.focus(); }));
+      if (!modal.removing) input.focus();
+    }
+
+    document.getElementById("proxy-modal").addEventListener("click", (e) => {
+      if (e.target.id === "proxy-modal" || e.target.closest("[data-modal-close]")) return closeProxy();
+      const v = modal && find(modal.id);
+      if (!v) return;
+
+      if (e.target.closest("[data-remove]")) { modal.removing = true; return renderModal(); }
+      if (e.target.closest("[data-remove-cancel]")) { modal.removing = false; return renderModal(); }
+      if (e.target.closest("[data-remove-confirm]")) {
+        delete v.proxies[modal.bidder];
+        toast("Proxy removed");
+        closeProxy();
+        return render();
+      }
+      if (e.target.closest("#proxy-save")) {
+        const amount = Number(document.getElementById("proxy-amount").value);
+        v.proxies[modal.bidder] = amount;
+        const b = modal.bidder;
+        closeProxy();
+        if (enabled(v) && !winning(v, b) && amount >= nextBid(v)) {
+          placeBid(v, b, true);
+        } else {
+          const added = !v.watch;
+          v.watch = true;
+          toast(`Proxy saved: up to ${money(amount)}${added ? " · added to watch list" : ""}`, "green");
+        }
+        render();
+      }
+    });
+
+    // ---------- Announcement modal ----------
+    function openAnnouncement(v) {
+      document.getElementById("announce-vehicle").textContent = v.title;
+      document.getElementById("announce-body").textContent = v.announcements;
+      const el = document.getElementById("announce-modal");
+      el.classList.replace("hidden", "flex");
+    }
+    document.getElementById("announce-modal").addEventListener("click", (e) => {
+      if (e.target.id === "announce-modal" || e.target.closest("[data-announce-close]")) {
+        e.currentTarget.classList.replace("flex", "hidden");
+      }
+    });
+
+    // ---------- Toasts ----------
+    function toast(message, tone = "slate") {
+      const icon = { green: "fa-circle-check text-green-400", red: "fa-circle-xmark text-red-400", slate: "fa-circle-info text-slate-300" }[tone];
+      const el = document.createElement("div");
+      el.className = "pointer-events-auto flex items-start gap-2 rounded-lg bg-slate-900 px-4 py-3 text-sm text-white shadow-lg";
+      el.innerHTML = `<i class="fa-solid ${icon} mt-0.5"></i><span>${message}</span>`;
+      document.getElementById("toasts").append(el);
+      setTimeout(() => el.remove(), 3500);
+    }
+
+    // ---------- Global events ----------
+    document.addEventListener("click", (e) => {
+      const a = e.target.closest("[data-action]");
+      if (!a) return;
+      const v = a.dataset.id && find(a.dataset.id);
+      const b = v && selectedFor(v);
+
+      switch (a.dataset.action) {
+        case "bid":
+          priceChanged[v.id] = false;
+          confirming[v.id] = nextBid(v);
+          break;
+        case "confirm-bid":
+          delete confirming[v.id];
+          placeBid(v, b);
+          break;
+        case "cancel-bid":
+          delete confirming[v.id];
+          break;
+        case "proxy":
+          return openProxy(v);
+        case "watch":
+          v.watch = !v.watch;
+          toast(v.watch ? "Added to watch list" : "Removed from watch list");
+          break;
+        case "announce":
+          return openAnnouncement(v);
+        case "register":
+          return toast(`Would open dealership verification for ${AUCTION} in a new tab.`);
+        case "simulate":
+          vehicles.forEach(competitorBid);
+          break;
+        case "reset":
+          vehicles = seed();
+          selected = {};
+          lastBidder = null;
+          confirming = {};
+          priceChanged = {};
+          toast("Mock data reset");
+          break;
+      }
+      render();
+    });
+
+    document.addEventListener("change", (e) => {
+      const id = e.target.dataset.bidderSelect;
+      if (id) {
+        selected[id] = e.target.value;
+        lastBidder = e.target.value;
+        delete confirming[id];
+        priceChanged[id] = false;
+        render();
+      }
+      if (e.target.name === "viewer") {
+        viewer = e.target.value;
+        confirming = {};
+        render();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      if (modal) closeProxy();
+      document.getElementById("announce-modal").classList.replace("flex", "hidden");
+    });
+
+    const toggleMock = () => {
+      document.getElementById("mock-body").classList.toggle("hidden");
+      document.getElementById("mock-chevron").classList.toggle("rotate-180");
+    };
+    document.getElementById("mock-toggle").addEventListener("click", toggleMock);
+    if (window.innerWidth < 1280) toggleMock();
+
+    document.getElementById("viewer-options").innerHTML = VIEWERS.map(([value, label, hint]) => `
+      <label class="flex cursor-pointer items-start gap-2 rounded-md px-2 py-1 hover:bg-slate-50">
+        <input type="radio" name="viewer" value="${value}" ${value === viewer ? "checked" : ""} class="mt-0.5">
+        <span><span class="font-medium">${label}</span>${hint ? `<span class="block text-xs text-slate-500">${hint}</span>` : ""}</span>
+      </label>`).join("");
+
+    document.getElementById("filter-list").innerHTML = FILTERS.map((f) => `
+      <button class="flex w-full items-center justify-between border-b border-slate-100 px-4 py-2.5 text-left last:border-0 hover:bg-slate-50 ${f === "Model" ? "text-slate-400" : ""}">
+        <span>${f}${f === "Model" ? ` <span class="text-xs">(select a make first)</span>` : ""}</span>
+        <i class="fa-solid fa-chevron-down text-xs text-slate-400"></i>
+      </button>`).join("");
+
+    render();
+    setInterval(tick, 1000);
+  </script>
+</body>
+</html>
