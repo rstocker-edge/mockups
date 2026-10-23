@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Offers · Dealer Direct Weekly</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="shell.js"></script>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 antialiased"
+      data-nav="events"
+      data-crumbs='[{"label":"Acme Auto Auction","href":"#"},{"label":"Events","href":"event-groups.html"},{"label":"Dealer Direct Weekly · Oct 1","href":"lanes.html"},{"label":"Offers"}]'>
+
+  <main class="mx-auto max-w-7xl px-6 py-8">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-semibold tracking-tight">Offers</h1>
+        <p class="mt-1 max-w-2xl text-sm text-slate-500">Vehicles that didn't sell in Dealer Direct Weekly (Thu, Oct 1). Offer one to a bidder who didn't win, and they'll get an email with a link to claim it.</p>
+      </div>
+      <a href="bid-monitor.html" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
+        <i class="fa-solid fa-gavel text-xs text-slate-400"></i> Bid monitor
+      </a>
+    </div>
+
+    <div class="mt-6 grid gap-6 lg:grid-cols-[22rem_1fr]">
+      <!-- Vehicle list -->
+      <section>
+        <div class="inline-flex w-full rounded-lg border border-slate-200 bg-white p-1 text-sm shadow-sm" id="tabs"></div>
+        <ul id="vehicle-list" class="mt-3 space-y-2"></ul>
+      </section>
+
+      <!-- Detail -->
+      <section id="detail"></section>
+    </div>
+  </main>
+
+  <!-- Composer -->
+  <div id="composer" class="fixed inset-0 z-40 hidden bg-slate-900/40">
+    <div class="absolute inset-y-0 right-0 flex w-full max-w-6xl flex-col bg-white shadow-2xl">
+      <div class="flex items-start justify-between border-b border-slate-200 px-6 py-4">
+        <div>
+          <h2 class="text-lg font-semibold">Make an offer</h2>
+          <p id="composer-sub" class="text-sm text-slate-500"></p>
+        </div>
+        <button data-composer-close class="grid h-9 w-9 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="grid min-h-0 flex-1 overflow-y-auto lg:grid-cols-[26rem_1fr] lg:overflow-hidden">
+        <form id="composer-form" class="space-y-6 border-slate-200 p-6 lg:overflow-y-auto lg:border-r" novalidate></form>
+        <div class="flex min-h-[40rem] flex-col bg-slate-100 lg:min-h-0">
+          <div class="flex items-center justify-between px-6 py-3 text-xs font-medium uppercase tracking-wide text-slate-500">
+            <span>Email preview</span>
+            <span id="preview-subject" class="normal-case tracking-normal text-slate-600"></span>
+          </div>
+          <iframe id="preview" title="Offer email preview" class="mx-6 mb-6 min-h-0 flex-1 rounded-lg border border-slate-200 bg-white"></iframe>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 border-t border-slate-200 bg-white px-6 py-3">
+        <p id="composer-error" class="hidden text-sm text-red-700"><i class="fa-solid fa-circle-exclamation mr-1"></i><span></span></p>
+        <div class="ml-auto flex gap-2">
+          <button data-composer-close class="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</button>
+          <button id="composer-send" class="rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"><i class="fa-solid fa-paper-plane mr-1.5 text-xs"></i><span>Send offer</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toasts" class="pointer-events-none fixed right-6 top-20 z-50 flex w-80 flex-col gap-2"></div>
+
+  <script>
+    const H = 3600e3, D = 24 * H;
+    const AUCTION = "AAA365 St Louis";
+    const ME = "Rob Stocker";
+
+    const money = (n) => "$" + Math.round(n).toLocaleString();
+    const pct = (a, b) => Math.round((a / b) * 100);
+    const abs = (t) => new Date(t).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
+    function rel(t) {
+      const s = Math.round(Math.abs(t - Date.now()) / 1000);
+      const v = s < 3600 ? `${Math.max(1, Math.round(s / 60))}m` : s < 86400 ? `${Math.round(s / 3600)}h` : `${Math.round(s / 86400)}d`;
+      return t > Date.now() ? `in ${v}` : `${v} ago`;
+    }
+
+    function seed() {
+      const t = Date.now();
+      return [
+        { id: "v1", title: "2020 Chevrolet Silverado 1500 LT Crew Cab 4WD", vin: "3GCUYDED8LG204511", stock: "DD-4410", lane: "Lane 1", run: "101", odo: 61240, img: "from-slate-500 to-slate-800",
+          result: "nosale", floor: 28500, threshold: 95,
+          bidders: [
+            { id: "a", dealer: "Lone Star Motors", name: "Maria Delgado", email: "maria.delgado@lonestarmotors.com", aa: false, max: 26250, bids: 6, last: "Oct 1, 11:58 AM" },
+            { id: "b", dealer: "Northside Auto", name: "Lee Park", email: "lpark@northsideauto.com", aa: true, max: 26000, bids: 4, last: "Oct 1, 11:57 AM" },
+            { id: "c", dealer: "Capital City Cars", name: "Dan Whitaker", email: "dan@capitalcitycars.com", aa: false, max: 24500, bids: 2, last: "Oct 1, 10:12 AM" },
+            { id: "d", dealer: "Riverbend Trucks", name: "Tom Becker", email: "tbecker@riverbendtrucks.com", aa: true, max: 22000, bids: 1, last: "Oct 1, 9:40 AM" },
+          ],
+          offers: [] },
+        { id: "v2", title: "2019 Toyota RAV4 XLE AWD", vin: "2T3P1RFV5KW018273", stock: "DD-4418", lane: "Lane 1", run: "104", odo: 54980, img: "from-red-700 to-red-950",
+          result: "offer", floor: 22500, threshold: 95,
+          bidders: [
+            { id: "a", dealer: "Gulf Coast Imports", name: "Priya Shah", email: "priya@gulfcoastimports.com", aa: false, max: 21900, bids: 5, last: "Oct 1, 11:59 AM" },
+            { id: "b", dealer: "Lone Star Motors", name: "Maria Delgado", email: "maria.delgado@lonestarmotors.com", aa: false, max: 21600, bids: 3, last: "Oct 1, 11:58 AM" },
+            { id: "c", dealer: "Northside Auto", name: "Lee Park", email: "lpark@northsideauto.com", aa: true, max: 19000, bids: 1, last: "Oct 1, 9:02 AM" },
+          ],
+          offers: [] },
+        { id: "v3", title: "2021 Ford Escape SE FWD", vin: "1FMCU0G62MUA30981", stock: "DD-4422", lane: "Lane 2", run: "203", odo: 38120, img: "from-blue-700 to-slate-900",
+          result: "nosale", floor: 19000, threshold: 95,
+          bidders: [
+            { id: "a", dealer: "Capital City Cars", name: "Dan Whitaker", email: "dan@capitalcitycars.com", aa: false, max: 16000, bids: 3, last: "Oct 1, 11:41 AM" },
+            { id: "b", dealer: "Gateway Auto Sales", name: "John Smith", email: "john@gatewayautosales.com", aa: true, max: 15800, bids: 2, last: "Oct 1, 11:40 AM" },
+          ],
+          offers: [{ bidder: "a", amount: 17000, status: "sent", sentAt: t - 17 * H, expiresAt: t + 31 * H, openedAt: t - 16 * H, by: ME, message: "" }] },
+        { id: "v4", title: "2018 Jeep Wrangler Unlimited Sport 4x4", vin: "1C4HJXDG2JW152238", stock: "DD-4431", lane: "Lane 2", run: "211", odo: 71450, img: "from-emerald-700 to-emerald-950",
+          result: "nosale", floor: 27000, threshold: 95,
+          bidders: [
+            { id: "a", dealer: "Riverbend Trucks", name: "Tom Becker", email: "tbecker@riverbendtrucks.com", aa: true, max: 25000, bids: 4, last: "Oct 1, 11:55 AM" },
+            { id: "b", dealer: "Lone Star Motors", name: "Maria Delgado", email: "maria.delgado@lonestarmotors.com", aa: false, max: 24750, bids: 3, last: "Oct 1, 11:54 AM" },
+            { id: "c", dealer: "Fleetway Commercial", name: "Ana Ruiz", email: "aruiz@fleetwaycommercial.com", aa: false, max: 23000, bids: 1, last: "Oct 1, 10:30 AM" },
+          ],
+          offers: [{ bidder: "a", amount: 25500, status: "declined", sentAt: t - 3 * D, expiresAt: t - D, openedAt: t - 3 * D + 2 * H, declinedAt: t - 2 * D, reason: "Price too high", by: ME, message: "" }] },
+        { id: "v5", title: "2017 Honda Pilot EX-L AWD", vin: "5FNYF6H58HB047712", stock: "DD-4436", lane: "Lane 2", run: "218", odo: 92310, img: "from-zinc-500 to-zinc-800",
+          result: "nosale", floor: 18000, threshold: 95,
+          bidders: [
+            { id: "a", dealer: "Northside Auto", name: "Lee Park", email: "lpark@northsideauto.com", aa: true, max: 16900, bids: 5, last: "Oct 1, 11:50 AM" },
+            { id: "b", dealer: "Capital City Cars", name: "Dan Whitaker", email: "dan@capitalcitycars.com", aa: false, max: 16500, bids: 2, last: "Oct 1, 11:49 AM" },
+          ],
+          offers: [{ bidder: "a", amount: 17400, status: "claimed", sentAt: t - 2 * D, expiresAt: t, openedAt: t - 2 * D + H, claimedAt: t - D, by: ME, message: "" }] },
+        { id: "v6", title: "2022 Nissan Sentra SV", vin: "3N1AB8CV4NY240187", stock: "DD-4440", lane: "Lane 1", run: "112", odo: 28770, img: "from-slate-300 to-slate-500",
+          result: "nosale", floor: 17500, threshold: 95, bidders: [], offers: [] },
+      ];
+    }
+
+    let vehicles = seed();
+    let tab = "needs";
+    let current = "v1";
+    let confirmRevoke = false;
+    let compose = null;
+
+    const find = (id) => vehicles.find((v) => v.id === id);
+    const bidderOf = (v, id) => v.bidders.find((b) => b.id === id);
+    const activeOffer = (v) => v.offers.find((o) => o.status === "sent");
+    const claimedOffer = (v) => v.offers.find((o) => o.status === "claimed");
+
+    function vstatus(v) {
+      if (claimedOffer(v)) return "claimed";
+      if (activeOffer(v)) return "sent";
+      if (v.result === "offer") return "seller";
+      if (!v.bidders.length) return "nobids";
+      return "needs";
+    }
+
+    const STATUS = {
+      needs: ["Needs action", "bg-amber-50 text-amber-800 ring-amber-600/20"],
+      sent: ["Offer sent", "bg-blue-50 text-blue-700 ring-blue-600/20"],
+      claimed: ["Claimed", "bg-green-50 text-green-700 ring-green-600/20"],
+      seller: ["With seller (if/offer)", "bg-violet-50 text-violet-700 ring-violet-600/20"],
+      nobids: ["No bids", "bg-slate-100 text-slate-600 ring-slate-500/20"],
+    };
+    const badge = (s) => `<span class="inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${STATUS[s][1]}">${STATUS[s][0]}</span>`;
+
+    const TABS = [["needs", "Needs action"], ["sent", "Sent"], ["claimed", "Claimed"], ["all", "All"]];
+
+    // ---------- List ----------
+    function renderList() {
+      document.getElementById("tabs").innerHTML = TABS.map(([key, label]) => {
+        const n = key === "all" ? vehicles.length : vehicles.filter((v) => vstatus(v) === key).length;
+        const on = key === tab;
+        return `<button data-tab="${key}" class="flex-1 rounded-md px-2 py-1.5 font-medium ${on ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-50"}">${label} <span class="ml-0.5 text-xs ${on ? "text-slate-300" : "text-slate-400"}">${n}</span></button>`;
+      }).join("");
+
+      const list = vehicles.filter((v) => tab === "all" || vstatus(v) === tab);
+      if (!list.some((v) => v.id === current) && list.length) current = list[0].id;
+
+      document.getElementById("vehicle-list").innerHTML = list.length ? list.map((v) => {
+        const high = v.bidders[0]?.max;
+        const on = v.id === current;
+        return `
+          <li>
+            <button data-select="${v.id}" class="w-full rounded-xl border bg-white p-3 text-left shadow-sm transition ${on ? "border-blue-500 ring-2 ring-blue-500/20" : "border-slate-200 hover:border-slate-300"}">
+              <div class="flex items-start justify-between gap-2">
+                <p class="line-clamp-2 text-sm font-medium">${v.title}</p>
+                ${badge(vstatus(v))}
+              </div>
+              <p class="mt-1 text-xs text-slate-500">Stock ${v.stock} · ${v.lane}, run ${v.run}</p>
+              <p class="mt-1 text-xs text-slate-600">${high ? `High bid ${money(high)} <span class="text-slate-400">·</span> ${pct(high, v.floor)}% of ${money(v.floor)} floor` : "No bids"}</p>
+            </button>
+          </li>`;
+      }).join("") : `<li class="rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">Nothing here.</li>`;
+    }
+
+    // ---------- Detail ----------
+    function claimUrl(v, o) {
+      const b = bidderOf(v, o.bidder);
+      return "offer-claim.html?" + new URLSearchParams({ title: v.title, vin: v.vin, odo: v.odo, stock: v.stock, amount: o.amount, name: b.name, dealer: b.dealer, exp: o.expiresAt });
+    }
+
+    function timeline(v, o) {
+      const b = bidderOf(v, o.bidder);
+      const steps = [
+        ["fa-paper-plane", `Offer emailed to ${b.email}`, `${abs(o.sentAt)} · by ${o.by}`, true],
+        ["fa-envelope-open", o.openedAt ? "Email opened" : "Not opened yet", o.openedAt ? abs(o.openedAt) : "", !!o.openedAt],
+      ];
+      if (o.resentAt) steps.push(["fa-rotate-right", "Email resent", abs(o.resentAt), true]);
+      if (o.status === "claimed") steps.push(["fa-circle-check", `Claimed by ${b.name}`, abs(o.claimedAt), true]);
+      return `
+        <ol class="mt-4 space-y-3">
+          ${steps.map(([icon, title, sub, done]) => `
+            <li class="flex gap-3">
+              <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full ${done ? "bg-blue-600 text-white" : "bg-white text-slate-400 ring-1 ring-slate-300"}"><i class="fa-solid ${icon} text-[11px]"></i></span>
+              <div class="text-sm"><p class="${done ? "font-medium text-slate-900" : "text-slate-500"}">${title}</p>${sub ? `<p class="text-xs text-slate-500">${sub}</p>` : ""}</div>
+            </li>`).join("")}
+        </ol>`;
+    }
+
+    function activeCard(v) {
+      const o = activeOffer(v);
+      if (!o) return "";
+      const b = bidderOf(v, o.bidder);
+      return `
+        <section class="mx-5 mt-5 rounded-xl border border-blue-200 bg-blue-50/40 p-4">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wide text-blue-700">Active offer</p>
+              <p class="mt-1 text-lg font-semibold">${money(o.amount)} to ${b.dealer}</p>
+              <p class="text-sm text-slate-600">${b.name} · ${b.email}</p>
+            </div>
+            <div class="text-right">
+              <p class="text-sm font-medium">Expires ${rel(o.expiresAt)}</p>
+              <p class="text-xs text-slate-500">${abs(o.expiresAt)}</p>
+            </div>
+          </div>
+          ${timeline(v, o)}
+          <div class="mt-4 flex flex-wrap items-center gap-2">
+            <button data-act="copy" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"><i class="fa-solid fa-link mr-1.5 text-xs text-slate-400"></i>Copy claim link</button>
+            <a href="${claimUrl(v, o)}" target="_blank" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"><i class="fa-solid fa-arrow-up-right-from-square mr-1.5 text-xs text-slate-400"></i>View claim page</a>
+            <button data-act="resend" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"><i class="fa-solid fa-rotate-right mr-1.5 text-xs text-slate-400"></i>Resend email</button>
+            ${confirmRevoke
+              ? `<span class="ml-auto flex items-center gap-2 text-sm"><span class="text-slate-600">Revoke this offer? The claim link stops working.</span>
+                   <button data-act="revoke-cancel" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50">Keep</button>
+                   <button data-act="revoke-confirm" class="rounded-lg bg-red-600 px-3 py-1.5 font-medium text-white hover:bg-red-700">Revoke</button></span>`
+              : `<button data-act="revoke" class="ml-auto rounded-lg px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50">Revoke offer</button>`}
+          </div>
+          <div class="mt-4 flex flex-wrap items-center gap-2 border-t border-dashed border-fuchsia-300 pt-3 text-xs">
+            <span class="font-semibold text-fuchsia-700"><i class="fa-solid fa-flask mr-1"></i>Mock bidder:</span>
+            ${o.openedAt ? "" : `<button data-mock="open" class="rounded-md bg-fuchsia-50 px-2 py-1 font-medium text-fuchsia-700 hover:bg-fuchsia-100">Opens email</button>`}
+            <button data-mock="claim" class="rounded-md bg-fuchsia-50 px-2 py-1 font-medium text-fuchsia-700 hover:bg-fuchsia-100">Claims offer</button>
+            <button data-mock="decline" class="rounded-md bg-fuchsia-50 px-2 py-1 font-medium text-fuchsia-700 hover:bg-fuchsia-100">Declines</button>
+            <button data-mock="expire" class="rounded-md bg-fuchsia-50 px-2 py-1 font-medium text-fuchsia-700 hover:bg-fuchsia-100">Lets it expire</button>
+          </div>
+        </section>`;
+    }
+
+    function claimedCard(v) {
+      const o = claimedOffer(v);
+      if (!o) return "";
+      const b = bidderOf(v, o.bidder);
+      return `
+        <section class="mx-5 mt-5 rounded-xl border border-green-200 bg-green-50/50 p-4">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wide text-green-700">Sold by offer</p>
+              <p class="mt-1 text-lg font-semibold">${money(o.amount)} to ${b.dealer}</p>
+              <p class="text-sm text-slate-600">${b.name} claimed it ${rel(o.claimedAt)} · ${abs(o.claimedAt)}</p>
+            </div>
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-xs font-medium text-slate-700 ring-1 ring-inset ring-slate-300">
+              <i class="fa-solid fa-spinner fa-spin text-[10px]"></i>Recording sale in AMS
+            </span>
+          </div>
+          ${timeline(v, o)}
+        </section>`;
+    }
+
+    function sellerBanner(v) {
+      if (vstatus(v) !== "seller") return "";
+      const top = v.bidders[0];
+      return `
+        <div class="mx-5 mt-5 flex items-start gap-3 rounded-lg border border-violet-200 bg-violet-50 p-4 text-sm text-violet-900">
+          <i class="fa-solid fa-scale-balanced mt-0.5 text-violet-500"></i>
+          <div class="flex-1">
+            <p class="font-medium">The seller is reviewing the high bid</p>
+            <p class="mt-0.5 text-violet-800">${top.dealer}'s ${money(top.max)} bid (${pct(top.max, v.floor)}% of floor) is an if/offer in AMS. You can offer this vehicle to another bidder once the seller declines it.</p>
+            <button data-mock="seller-decline" class="mt-2 rounded-md bg-fuchsia-50 px-2 py-1 text-xs font-medium text-fuchsia-700 hover:bg-fuchsia-100"><i class="fa-solid fa-flask mr-1"></i>Mock: seller declines in AMS</button>
+          </div>
+        </div>`;
+    }
+
+    function biddersTable(v) {
+      if (!v.bidders.length) {
+        return `<div class="m-5 rounded-lg border border-dashed border-slate-300 p-8 text-center">
+          <i class="fa-regular fa-face-meh text-2xl text-slate-300"></i>
+          <p class="mt-2 font-medium">Nobody bid on this vehicle</p>
+          <p class="text-sm text-slate-500">There's no one to offer it to. Consider running it in a future event.</p>
+        </div>`;
+      }
+      const st = vstatus(v);
+      const locked = ["sent", "claimed", "seller"].includes(st);
+      const lockReason = { sent: "Revoke the active offer first", claimed: "This vehicle has been claimed", seller: "Waiting on the seller's if/offer decision" }[st];
+
+      const rows = v.bidders.map((b, i) => {
+        const past = v.offers.filter((o) => o.bidder === b.id && o.status !== "sent");
+        const chips = past.map((o) => {
+          const cls = { declined: "bg-red-50 text-red-700", expired: "bg-slate-100 text-slate-600", revoked: "bg-slate-100 text-slate-600", claimed: "bg-green-50 text-green-700" }[o.status];
+          return `<span class="rounded px-1.5 py-0.5 text-[11px] font-medium ${cls}" title="${o.reason ? `Reason: ${o.reason}` : ""}">${o.status[0].toUpperCase() + o.status.slice(1)} ${money(o.amount)}</span>`;
+        }).join(" ");
+        const isActive = activeOffer(v)?.bidder === b.id;
+        const wasOffered = past.length > 0;
+        return `
+          <tr class="${isActive ? "bg-blue-50/50" : "hover:bg-slate-50"}">
+            <td class="py-3 pl-5 text-sm font-medium tabular-nums text-slate-400">#${i + 1}</td>
+            <td class="px-3 py-3">
+              <p class="font-medium">${b.dealer}</p>
+              <p class="text-xs text-slate-500">${b.name}${b.aa ? ` · <span class="text-slate-600">via AuctionACCESS</span>` : ""}</p>
+            </td>
+            <td class="px-3 py-3 text-right">
+              <p class="font-medium tabular-nums">${money(b.max)}</p>
+              <p class="text-xs ${pct(b.max, v.floor) >= v.threshold ? "text-green-700" : "text-slate-500"}">${pct(b.max, v.floor)}% of floor</p>
+            </td>
+            <td class="px-3 py-3 text-sm text-slate-600">${b.bids} bid${b.bids === 1 ? "" : "s"}<p class="text-xs text-slate-500">Last ${b.last}</p></td>
+            <td class="px-3 py-3">${isActive ? `<span class="rounded bg-blue-100 px-1.5 py-0.5 text-[11px] font-medium text-blue-700">Offer pending</span>` : chips}</td>
+            <td class="py-3 pr-5 text-right">
+              <button data-offer="${b.id}" ${locked ? `disabled title="${lockReason}"` : ""}
+                class="whitespace-nowrap rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white">
+                ${wasOffered ? "Offer again" : "Make offer"}
+              </button>
+            </td>
+          </tr>`;
+      }).join("");
+
+      return `
+        <div class="px-5 pb-2 pt-6">
+          <h3 class="font-semibold">Bidders</h3>
+          <p class="text-sm text-slate-500">Ranked by highest bid. ${locked ? lockReason + "." : "Pick who to offer the vehicle to."}</p>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[640px] text-left text-sm">
+            <thead class="border-y border-slate-200 bg-slate-50 text-xs font-medium uppercase tracking-wide text-slate-500">
+              <tr><th class="py-2.5 pl-5">Rank</th><th class="px-3 py-2.5">Bidder</th><th class="px-3 py-2.5 text-right">Highest bid</th><th class="px-3 py-2.5">Activity</th><th class="px-3 py-2.5">Offers</th><th class="py-2.5 pr-5"></th></tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">${rows}</tbody>
+          </table>
+        </div>`;
+    }
+
+    function history(v) {
+      const past = v.offers.filter((o) => !["sent", "claimed"].includes(o.status)).sort((a, b) => b.sentAt - a.sentAt);
+      if (!past.length) return "";
+      return `
+        <div class="border-t border-slate-200 px-5 py-5">
+          <h3 class="font-semibold">Offer history</h3>
+          <ul class="mt-3 space-y-2 text-sm">
+            ${past.map((o) => {
+              const b = bidderOf(v, o.bidder);
+              const outcome = {
+                declined: `<span class="font-medium text-red-700">Declined</span> ${rel(o.declinedAt)}${o.reason ? ` — “${o.reason}”` : ""}`,
+                expired: `<span class="font-medium text-slate-700">Expired</span> ${rel(o.expiresAt)}`,
+                revoked: `<span class="font-medium text-slate-700">Revoked</span> ${rel(o.revokedAt)} by ${ME}`,
+              }[o.status];
+              return `<li class="flex flex-wrap items-baseline gap-x-2 rounded-lg bg-slate-50 px-3 py-2"><span class="font-medium tabular-nums">${money(o.amount)}</span><span class="text-slate-600">to ${b.dealer} (${b.name})</span><span class="text-slate-400">·</span><span class="text-slate-600">${outcome}</span><span class="ml-auto text-xs text-slate-400">sent ${abs(o.sentAt)}</span></li>`;
+            }).join("")}
+          </ul>
+        </div>`;
+    }
+
+    function renderDetail() {
+      const v = find(current);
+      if (!v) { document.getElementById("detail").innerHTML = ""; return; }
+      const high = v.bidders[0]?.max;
+      document.getElementById("detail").innerHTML = `
+        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div class="flex gap-4 border-b border-slate-200 p-5">
+            <div class="grid h-20 w-28 shrink-0 place-items-center rounded-lg bg-gradient-to-br ${v.img} text-white/60"><i class="fa-solid fa-car-side text-3xl"></i></div>
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2"><h2 class="text-lg font-semibold">${v.title}</h2>${badge(vstatus(v))}</div>
+              <p class="mt-0.5 text-sm text-slate-500"><span class="font-mono">${v.vin}</span> · Stock ${v.stock} · ${v.lane}, run ${v.run} · ${v.odo.toLocaleString()} mi</p>
+            </div>
+          </div>
+          <dl class="grid grid-cols-2 gap-4 border-b border-slate-200 p-5 sm:grid-cols-4">
+            <div><dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Floor price</dt><dd class="mt-1 text-lg font-semibold tabular-nums">${money(v.floor)}</dd></div>
+            <div><dt class="text-xs font-medium uppercase tracking-wide text-slate-500">High bid</dt><dd class="mt-1 text-lg font-semibold tabular-nums">${high ? money(high) : "—"}</dd>${high ? `<dd class="text-xs text-slate-500">${pct(high, v.floor)}% of floor</dd>` : ""}</div>
+            <div><dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Short of floor</dt><dd class="mt-1 text-lg font-semibold tabular-nums ${high ? "text-red-700" : ""}">${high ? money(v.floor - high) : "—"}</dd></div>
+            <div><dt class="text-xs font-medium uppercase tracking-wide text-slate-500">If/offer threshold</dt><dd class="mt-1 text-lg font-semibold tabular-nums">${v.threshold}%</dd><dd class="text-xs text-slate-500">${money(v.floor * v.threshold / 100)} and up</dd></div>
+          </dl>
+          ${sellerBanner(v)}
+          ${activeCard(v)}
+          ${claimedCard(v)}
+          ${biddersTable(v)}
+          ${history(v)}
+        </div>`;
+    }
+
+    function render() {
+      renderList();
+      renderDetail();
+    }
+
+    // ---------- Composer ----------
+    function defaultMessage(v, b) {
+      return `Hi ${b.name.split(" ")[0]},\n\nThanks for bidding on the ${v.title} in our Dealer Direct Weekly sale. It didn't sell during the auction, and we'd like to offer it to you.`;
+    }
+
+    function composeAmount() {
+      const v = find(compose.vid), b = bidderOf(v, compose.bidder);
+      if (compose.mode === "max") return b.max;
+      if (compose.mode === "floor") return v.floor;
+      return Number(compose.custom) || 0;
+    }
+
+    function openComposer(vid, bidderId) {
+      const v = find(vid), b = bidderOf(v, bidderId);
+      compose = { vid, bidder: bidderId, mode: "max", custom: "", hours: 48, email: b.email, cc: true, approved: false, message: defaultMessage(v, b) };
+
+      document.getElementById("composer-sub").textContent = `${v.title} · to ${b.dealer}`;
+      document.getElementById("composer-form").innerHTML = `
+        <section>
+          <h3 class="text-sm font-semibold">Recipient</h3>
+          <div class="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+            <p class="font-medium">${b.name}</p>
+            <p class="text-slate-500">${b.dealer}${b.aa ? " · via AuctionACCESS" : ""}</p>
+            <p class="mt-1 text-xs text-slate-500">Highest bid ${money(b.max)} · ${b.bids} bid${b.bids === 1 ? "" : "s"}</p>
+          </div>
+          <label for="c-email" class="mt-3 block text-sm font-medium text-slate-700">Email</label>
+          <input id="c-email" type="email" value="${b.email}" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+          <p class="mt-1 text-xs text-slate-500">From their member profile.</p>
+          <label class="mt-2 flex items-center gap-2 text-sm text-slate-700"><input id="c-cc" type="checkbox" checked class="rounded border-slate-300"> CC me (${ME})</label>
+        </section>
+
+        <fieldset>
+          <legend class="text-sm font-semibold">Offer price</legend>
+          <div class="mt-2 space-y-2">
+            ${[["max", "Their highest bid", money(b.max), `${pct(b.max, v.floor)}% of floor`], ["floor", "Seller's floor price", money(v.floor), "No seller approval needed"]].map(([val, label, amt, sub]) => `
+              <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-300 p-3 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 has-[:checked]:ring-1 has-[:checked]:ring-blue-600">
+                <input type="radio" name="c-mode" value="${val}" ${val === "max" ? "checked" : ""} class="text-blue-600">
+                <span class="flex-1 text-sm"><span class="block font-medium">${label}</span><span class="text-xs text-slate-500">${sub}</span></span>
+                <span class="font-semibold tabular-nums">${amt}</span>
+              </label>`).join("")}
+            <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-300 p-3 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 has-[:checked]:ring-1 has-[:checked]:ring-blue-600">
+              <input type="radio" name="c-mode" value="custom" class="text-blue-600">
+              <span class="flex-1 text-sm font-medium">Custom amount</span>
+              <span class="relative w-32">
+                <span class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-slate-400">$</span>
+                <input id="c-custom" type="number" step="100" placeholder="0" class="w-full rounded-md border border-slate-300 py-1.5 pl-6 pr-2 text-right text-sm tabular-nums focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+              </span>
+            </label>
+          </div>
+          <div id="c-price-note" class="mt-3"></div>
+        </fieldset>
+
+        <section>
+          <label for="c-hours" class="text-sm font-semibold">Offer expires</label>
+          <select id="c-hours" class="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+            <option value="24">In 24 hours</option>
+            <option value="48" selected>In 48 hours</option>
+            <option value="72">In 3 days</option>
+            <option value="168">In 7 days</option>
+          </select>
+          <p id="c-exp-abs" class="mt-1 text-xs text-slate-500"></p>
+        </section>
+
+        <section>
+          <label for="c-message" class="text-sm font-semibold">Message</label>
+          <textarea id="c-message" rows="6" class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20">${compose.message}</textarea>
+          <p class="mt-1 text-xs text-slate-500">Vehicle details, the price, the expiry and the claim button are added automatically.</p>
+        </section>`;
+
+      document.getElementById("composer").classList.remove("hidden");
+      updateComposer();
+    }
+
+    function closeComposer() {
+      compose = null;
+      document.getElementById("composer").classList.add("hidden");
+    }
+
+    let previewTimer;
+    function updateComposer() {
+      const v = find(compose.vid), b = bidderOf(v, compose.bidder);
+      const amount = composeAmount();
+      const below = amount > 0 && amount < v.floor;
+      const expiresAt = Date.now() + compose.hours * H;
+
+      document.getElementById("c-exp-abs").textContent = abs(expiresAt);
+
+      const note = document.getElementById("c-price-note");
+      const wasApproved = compose.approved;
+      note.innerHTML = below ? `
+        <div class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          <p><i class="fa-solid fa-triangle-exclamation mr-1 text-amber-500"></i>${money(amount)} is <b>${money(v.floor - amount)}</b> below the seller's floor.</p>
+          <label class="mt-2 flex items-start gap-2"><input id="c-approved" type="checkbox" ${wasApproved ? "checked" : ""} class="mt-0.5 rounded border-amber-400"> The seller approved selling at this price</label>
+        </div>` : amount > 0 && amount < b.max ? `
+        <p class="text-xs text-slate-500"><i class="fa-solid fa-circle-info mr-1"></i>That's less than their highest bid of ${money(b.max)}.</p>` : "";
+
+      let error = "";
+      if (!amount) error = "Enter an offer price.";
+      else if (below && !compose.approved) error = "Confirm the seller approved a below-floor price.";
+      else if (!/^\S+@\S+\.\S+$/.test(compose.email)) error = "Enter a valid email address.";
+
+      const err = document.getElementById("composer-error");
+      err.classList.toggle("hidden", !error);
+      err.querySelector("span").textContent = error;
+      const send = document.getElementById("composer-send");
+      send.disabled = !!error;
+      send.querySelector("span").textContent = amount ? `Send offer · ${money(amount)}` : "Send offer";
+
+      document.getElementById("preview-subject").textContent = `Subject: Your offer on the ${v.title}`;
+
+      clearTimeout(previewTimer);
+      previewTimer = setTimeout(() => {
+        if (!compose) return;
+        const claim = claimUrl(v, { bidder: b.id, amount, expiresAt });
+        document.getElementById("preview").src = "offer-email.html?" + new URLSearchParams({
+          title: v.title, vin: v.vin, odo: v.odo, stock: v.stock, amount, name: b.name, dealer: b.dealer,
+          exp: expiresAt, message: compose.message, claim,
+        });
+      }, 250);
+    }
+
+    document.getElementById("composer").addEventListener("input", (e) => {
+      if (!compose) return;
+      const t = e.target;
+      if (t.name === "c-mode") compose.mode = t.value;
+      if (t.id === "c-custom") { compose.custom = t.value; compose.mode = "custom"; document.querySelector('input[name="c-mode"][value="custom"]').checked = true; }
+      if (t.id === "c-hours") compose.hours = Number(t.value);
+      if (t.id === "c-email") compose.email = t.value;
+      if (t.id === "c-cc") compose.cc = t.checked;
+      if (t.id === "c-approved") compose.approved = t.checked;
+      if (t.id === "c-message") compose.message = t.value;
+      if (t.name === "c-mode" || t.id === "c-custom") compose.approved = false;
+      updateComposer();
+    });
+
+    document.getElementById("composer").addEventListener("click", (e) => {
+      if (e.target.id === "composer" || e.target.closest("[data-composer-close]")) closeComposer();
+    });
+
+    document.getElementById("composer-send").addEventListener("click", () => {
+      const v = find(compose.vid), b = bidderOf(v, compose.bidder);
+      const amount = composeAmount();
+      v.offers.push({ bidder: b.id, amount, status: "sent", sentAt: Date.now(), expiresAt: Date.now() + compose.hours * H, openedAt: null, by: ME, message: compose.message });
+      toast(`Offer of ${money(amount)} emailed to ${compose.email}${compose.cc ? " (you were CC'd)" : ""}`, "green");
+      closeComposer();
+      tab = "sent";
+      render();
+    });
+
+    // ---------- Actions ----------
+    function toast(message, tone = "slate") {
+      const icon = { green: "fa-circle-check text-green-400", slate: "fa-circle-info text-slate-300" }[tone];
+      const el = document.createElement("div");
+      el.className = "pointer-events-auto flex items-start gap-2 rounded-lg bg-slate-900 px-4 py-3 text-sm text-white shadow-lg";
+      el.innerHTML = `<i class="fa-solid ${icon} mt-0.5"></i><span>${message}</span>`;
+      document.getElementById("toasts").append(el);
+      setTimeout(() => el.remove(), 3500);
+    }
+
+    document.addEventListener("click", async (e) => {
+      const t = e.target;
+      const sel = t.closest("[data-select]");
+      if (sel) { current = sel.dataset.select; confirmRevoke = false; return render(); }
+
+      const tb = t.closest("[data-tab]");
+      if (tb) { tab = tb.dataset.tab; confirmRevoke = false; return render(); }
+
+      const off = t.closest("[data-offer]");
+      if (off && !off.disabled) return openComposer(current, off.dataset.offer);
+
+      const v = find(current);
+      const o = v && activeOffer(v);
+      const act = t.closest("[data-act]")?.dataset.act;
+      if (act === "copy") {
+        const url = new URL(claimUrl(v, o), location.href).href;
+        try { await navigator.clipboard.writeText(url); } catch {}
+        toast("Claim link copied");
+      }
+      if (act === "resend") { o.resentAt = Date.now(); toast(`Offer email resent to ${bidderOf(v, o.bidder).email}`); }
+      if (act === "revoke") confirmRevoke = true;
+      if (act === "revoke-cancel") confirmRevoke = false;
+      if (act === "revoke-confirm") { o.status = "revoked"; o.revokedAt = Date.now(); confirmRevoke = false; toast("Offer revoked. The claim link no longer works."); }
+
+      const mock = t.closest("[data-mock]")?.dataset.mock;
+      if (mock === "open") o.openedAt = Date.now();
+      if (mock === "claim") { o.status = "claimed"; o.claimedAt = Date.now(); o.openedAt ??= Date.now(); toast(`${bidderOf(v, o.bidder).name} claimed the offer`, "green"); }
+      if (mock === "decline") { o.status = "declined"; o.declinedAt = Date.now(); o.reason = "Found another vehicle"; toast(`${bidderOf(v, o.bidder).name} declined the offer`); }
+      if (mock === "expire") { o.status = "expired"; o.expiresAt = Date.now() - 60e3; toast("Offer expired"); }
+      if (mock === "seller-decline") { v.result = "nosale"; toast("Seller declined the if/offer. You can now offer it to other bidders."); }
+
+      if ((act || mock) && tab !== "all") tab = vstatus(v);
+      if (act || mock) render();
+    });
+
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && compose) closeComposer(); });
+
+    render();
+  </script>
+</body>
+</html>

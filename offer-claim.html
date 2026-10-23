@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Your offer · .Auction</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { fontFamily: { sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"] } } } };
+  </script>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
+  <header class="bg-[#2661A8]">
+    <div class="mx-auto flex h-14 max-w-5xl items-center gap-3 px-6 text-white">
+      <span class="grid h-8 w-8 place-items-center rounded-md bg-white/15"><i class="fa-solid fa-layer-group"></i></span>
+      <span class="text-sm font-semibold">Edge Pipeline</span>
+      <span class="ml-auto grid h-8 w-8 place-items-center rounded-full bg-white/20 text-xs font-semibold" id="initials"></span>
+    </div>
+  </header>
+  <div class="border-b border-fuchsia-200 bg-fuchsia-50">
+    <div id="mock" class="mx-auto flex max-w-5xl flex-wrap items-center gap-1.5 px-6 py-2 text-xs"></div>
+  </div>
+
+  <main class="mx-auto max-w-3xl px-6 py-10">
+    <p class="text-sm font-semibold tracking-tight text-slate-500"><span class="rounded bg-red-600 px-1 py-0.5 text-[10px] font-bold text-white">EDGE</span> .Auction · AAA365 St Louis</p>
+    <div id="app" class="mt-4"></div>
+  </main>
+
+  <script>
+    const p = new URLSearchParams(location.search);
+    const offer = {
+      title: p.get("title") || "2020 Chevrolet Silverado 1500 LT Crew Cab 4WD",
+      vin: p.get("vin") || "3GCUYDED8LG204511",
+      odo: Number(p.get("odo") || 61240),
+      stock: p.get("stock") || "DD-4410",
+      amount: Number(p.get("amount") || 26250),
+      name: p.get("name") || "Maria Delgado",
+      dealer: p.get("dealer") || "Lone Star Motors",
+      expiresAt: Number(p.get("exp")) || Date.now() + 47 * 3600e3,
+    };
+
+    let state = "open";
+    let step = "review";
+    let reason = "";
+
+    const money = (n) => "$" + Math.round(n).toLocaleString();
+    const abs = (t) => new Date(t).toLocaleString("en-US", { weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
+    const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+    function remaining() {
+      const s = Math.max(0, Math.round((offer.expiresAt - Date.now()) / 1000));
+      const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+      return h ? `${h}h ${m}m` : `${m}m ${String(sec).padStart(2, "0")}s`;
+    }
+
+    const vehicleCard = () => `
+      <div class="flex gap-4 p-5">
+        <div class="grid h-24 w-32 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-slate-500 to-slate-800 text-white/60"><i class="fa-solid fa-car-side text-4xl"></i></div>
+        <div class="min-w-0">
+          <h2 class="font-semibold">${esc(offer.title)}</h2>
+          <p class="mt-1 text-sm text-slate-500"><span class="font-mono">${esc(offer.vin)}</span></p>
+          <p class="text-sm text-slate-500">${offer.odo.toLocaleString()} mi · Stock ${esc(offer.stock)} · East St. Louis, IL</p>
+          <a href="#" class="mt-1 inline-block text-sm font-medium text-[#2661A8] hover:underline">View photos &amp; condition report</a>
+        </div>
+      </div>`;
+
+    function render() {
+      const app = document.getElementById("app");
+      document.getElementById("initials").textContent = offer.name.split(" ").map((w) => w[0]).join("");
+
+      if (state === "claimed") {
+        app.innerHTML = `
+          <div class="rounded-2xl border border-green-200 bg-white p-8 text-center shadow-sm">
+            <span class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-green-100 text-green-600"><i class="fa-solid fa-check text-2xl"></i></span>
+            <h1 class="mt-4 text-2xl font-semibold tracking-tight">It's yours!</h1>
+            <p class="mt-1 text-slate-600">You bought the ${esc(offer.title)} for <b>${money(offer.amount)}</b>.</p>
+            <p class="mt-4 text-sm text-slate-500">AAA365 St Louis will follow up with payment and pickup details. It'll also appear under <a href="#" class="font-medium text-[#2661A8] hover:underline">My Purchases</a>.</p>
+          </div>`;
+        return;
+      }
+      if (state === "declined") {
+        app.innerHTML = `
+          <div class="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+            <span class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-slate-100 text-slate-500"><i class="fa-solid fa-hand text-2xl"></i></span>
+            <h1 class="mt-4 text-2xl font-semibold tracking-tight">Offer declined</h1>
+            <p class="mt-1 text-slate-600">Thanks for letting us know. We won't hold the ${esc(offer.title)} for you.</p>
+            <a href="dot-auction-search.html" class="mt-6 inline-flex rounded-lg bg-[#2661A8] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1f528f]">Browse upcoming auctions</a>
+          </div>`;
+        return;
+      }
+      if (state === "expired" || state === "revoked") {
+        app.innerHTML = `
+          <div class="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+            <span class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-amber-100 text-amber-600"><i class="fa-regular fa-clock text-2xl"></i></span>
+            <h1 class="mt-4 text-2xl font-semibold tracking-tight">${state === "expired" ? "This offer has expired" : "This offer is no longer available"}</h1>
+            <p class="mt-1 text-slate-600">${state === "expired" ? `It expired ${abs(offer.expiresAt)}.` : "The auction withdrew this offer."} Contact AAA365 St Louis if you're still interested in the ${esc(offer.title)}.</p>
+            <a href="dot-auction-search.html" class="mt-6 inline-flex rounded-lg bg-[#2661A8] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1f528f]">Browse upcoming auctions</a>
+          </div>`;
+        return;
+      }
+
+      app.innerHTML = `
+        <h1 class="text-3xl font-semibold tracking-tight">You have an offer, ${esc(offer.name.split(" ")[0])}</h1>
+        <p class="mt-2 text-slate-600">This vehicle didn't sell in the auction. AAA365 St Louis is offering it to <b>${esc(offer.dealer)}</b> at the price below.</p>
+
+        <div class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          ${vehicleCard()}
+          <div class="flex flex-wrap items-end justify-between gap-4 border-t border-slate-200 bg-slate-50 px-5 py-4">
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Offer price</p>
+              <p class="text-3xl font-semibold tabular-nums">${money(offer.amount)}</p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Expires in</p>
+              <p class="text-lg font-semibold tabular-nums text-amber-700" data-remaining>${remaining()}</p>
+              <p class="text-xs text-slate-500">${abs(offer.expiresAt)}</p>
+            </div>
+          </div>
+
+          <div class="border-t border-slate-200 p-5">
+            ${step === "decline" ? `
+              <h3 class="font-semibold">Decline this offer?</h3>
+              <label for="reason" class="mt-3 block text-sm text-slate-600">Want to tell us why? (optional)</label>
+              <select id="reason" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+                <option value="">Choose a reason…</option>
+                <option>Price too high</option><option>Found another vehicle</option><option>No longer need it</option><option>Other</option>
+              </select>
+              <div class="mt-4 flex flex-wrap justify-end gap-2">
+                <button data-step="review" class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Go back</button>
+                <button data-do="decline" class="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">Decline offer</button>
+              </div>
+            ` : `
+              <label class="flex items-start gap-3 text-sm text-slate-700">
+                <input id="agree" type="checkbox" class="mt-0.5 rounded border-slate-300">
+                <span>I'm buying this vehicle for <b>${money(offer.amount)}</b> on behalf of ${esc(offer.dealer)}, subject to AAA365 St Louis's <a href="#" class="font-medium text-[#2661A8] hover:underline">terms and conditions</a>.</span>
+              </label>
+              <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
+                <button data-step="decline" class="text-sm font-medium text-slate-500 hover:text-slate-800">No thanks, decline</button>
+                <button id="claim" data-do="claim" disabled class="rounded-lg bg-green-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40">Claim for ${money(offer.amount)}</button>
+              </div>
+            `}
+          </div>
+        </div>
+
+        <p class="mt-4 text-center text-xs text-slate-500">Questions about this vehicle? Call AAA365 St Louis at (314) 555-0142.</p>`;
+    }
+
+    document.addEventListener("change", (e) => {
+      if (e.target.id === "agree") document.getElementById("claim").disabled = !e.target.checked;
+      if (e.target.id === "reason") reason = e.target.value;
+    });
+
+    document.addEventListener("click", (e) => {
+      const s = e.target.closest("[data-step]");
+      if (s) { step = s.dataset.step; return render(); }
+      const d = e.target.closest("[data-do]")?.dataset.do;
+      if (d === "claim") { state = "claimed"; render(); }
+      if (d === "decline") { state = "declined"; render(); }
+      const m = e.target.closest("[data-state]");
+      if (m) { state = m.dataset.state; step = "review"; render(); }
+    });
+
+    document.getElementById("mock").innerHTML = `<span class="font-semibold text-fuchsia-700"><i class="fa-solid fa-flask mr-1"></i>Mock state:</span>` +
+      [["open", "Open offer"], ["claimed", "Claimed"], ["declined", "Declined"], ["expired", "Expired"], ["revoked", "Revoked by auction"]]
+      .map(([k, l]) => `<button data-state="${k}" class="rounded-md bg-white px-2 py-1 font-medium text-fuchsia-700 ring-1 ring-fuchsia-200 hover:bg-fuchsia-100">${l}</button>`).join("") +
+      `<a href="offers.html" class="ml-auto text-slate-500 hover:text-slate-800"><i class="fa-solid fa-arrow-left mr-1"></i>Admin offers</a>`;
+
+    setInterval(() => {
+      const el = document.querySelector("[data-remaining]");
+      if (!el) return;
+      if (Date.now() >= offer.expiresAt) { state = "expired"; return render(); }
+      el.textContent = remaining();
+    }, 1000);
+
+    render();
+  </script>
+</body>
+</html>

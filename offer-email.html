@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Offer email</title>
+</head>
+<!-- Email clients ignore <style> and external CSS, so everything is inline and table-based. -->
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f172a;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:24px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;">
+          <tr>
+            <td style="background:#2661A8;padding:18px 28px;">
+              <span style="display:inline-block;background:#dc2626;color:#fff;font-size:10px;font-weight:700;padding:2px 4px;border-radius:3px;vertical-align:middle;">EDGE</span>
+              <span style="color:#ffffff;font-size:18px;font-weight:600;vertical-align:middle;margin-left:4px;">.Auction</span>
+              <span style="color:#cbd5e1;font-size:13px;vertical-align:middle;margin-left:10px;">AAA365 St Louis</span>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:28px 28px 8px;">
+              <p style="margin:0 0 6px;font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#2661A8;">You have an offer</p>
+              <h1 style="margin:0;font-size:22px;line-height:1.3;font-weight:700;">This vehicle is yours for <span data-amount></span></h1>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:12px 28px 0;font-size:15px;line-height:1.6;color:#334155;" data-message></td>
+          </tr>
+
+          <tr>
+            <td style="padding:20px 28px 0;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:10px;">
+                <tr>
+                  <td width="120" style="padding:12px;">
+                    <div style="width:110px;height:80px;border-radius:8px;background:linear-gradient(135deg,#64748b,#1e293b);color:rgba(255,255,255,.6);font-size:28px;text-align:center;line-height:80px;">&#128663;</div>
+                  </td>
+                  <td style="padding:12px 12px 12px 0;vertical-align:top;">
+                    <p style="margin:0;font-size:15px;font-weight:600;" data-title></p>
+                    <p style="margin:4px 0 0;font-size:12px;color:#64748b;">VIN <span style="font-family:Menlo,Consolas,monospace;" data-vin></span></p>
+                    <p style="margin:2px 0 0;font-size:12px;color:#64748b;"><span data-odo></span> mi · Stock <span data-stock></span></p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" style="border-top:1px solid #e2e8f0;padding:14px 16px;background:#f8fafc;border-radius:0 0 10px 10px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="font-size:13px;color:#64748b;">Offer price</td>
+                        <td align="right" style="font-size:22px;font-weight:700;" data-amount></td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:13px;color:#64748b;padding-top:4px;">Offered to</td>
+                        <td align="right" style="font-size:13px;padding-top:4px;" data-dealer></td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td align="center" style="padding:24px 28px 8px;">
+              <a data-claim target="_blank" style="display:inline-block;background:#16a34a;color:#ffffff;text-decoration:none;font-size:16px;font-weight:600;padding:14px 28px;border-radius:8px;">Review &amp; claim offer</a>
+              <p style="margin:12px 0 0;font-size:13px;color:#b45309;">&#9201; This offer expires <b data-exp></b>.</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:16px 28px 24px;font-size:13px;line-height:1.6;color:#64748b;">
+              Not interested? Use the same link to decline, and we'll offer it to someone else.<br>
+              Button not working? Copy this link into your browser:<br>
+              <a data-claim-text target="_blank" style="color:#2661A8;word-break:break-all;"></a>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="border-top:1px solid #e2e8f0;padding:18px 28px;font-size:12px;line-height:1.6;color:#94a3b8;">
+              You're receiving this because you bid on this vehicle in AAA365 St Louis's Dealer Direct Weekly sale. Purchases are subject to the auction's terms and conditions.<br>
+              AAA365 St Louis · Questions? Reply to this email.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <script>
+    const p = new URLSearchParams(location.search);
+    const money = (n) => "$" + Math.round(Number(n)).toLocaleString();
+    const set = (sel, text) => document.querySelectorAll(sel).forEach((el) => (el.textContent = text));
+
+    set("[data-title]", p.get("title") || "2020 Chevrolet Silverado 1500 LT Crew Cab 4WD");
+    set("[data-vin]", p.get("vin") || "3GCUYDED8LG204511");
+    set("[data-odo]", Number(p.get("odo") || 61240).toLocaleString());
+    set("[data-stock]", p.get("stock") || "DD-4410");
+    set("[data-amount]", money(p.get("amount") || 26250));
+    set("[data-dealer]", `${p.get("name") || "Maria Delgado"}, ${p.get("dealer") || "Lone Star Motors"}`);
+    set("[data-exp]", new Date(Number(p.get("exp")) || Date.now() + 48 * 3600e3)
+      .toLocaleString("en-US", { weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" }));
+
+    // Message paragraphs built with textContent so admin-entered text can't inject HTML.
+    const msg = document.querySelector("[data-message]");
+    (p.get("message") || "Hi Maria,\n\nThanks for bidding. It didn't sell during the auction, and we'd like to offer it to you.")
+      .split(/\n{2,}/).forEach((para) => {
+        const el = document.createElement("p");
+        el.style.margin = "0 0 12px";
+        para.split("\n").forEach((line, i) => { if (i) el.append(document.createElement("br")); el.append(line); });
+        msg.append(el);
+      });
+
+    const raw = p.get("claim") || "";
+    const claim = new URL(raw.startsWith("offer-claim.html") ? raw : "offer-claim.html", location.href).href;
+    document.querySelector("[data-claim]").href = claim;
+    const txt = document.querySelector("[data-claim-text]");
+    txt.href = claim;
+    txt.textContent = "https://edgepipeline.com/offers/7Hq2xK9pLm";
+  </script>
+</body>
+</html>
